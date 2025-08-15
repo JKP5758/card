@@ -96,7 +96,7 @@
                 <p class="text-xs text-slate-400 mt-2">Aturan payout: Menang = +taruhan, Kalah = -taruhan, Seri = 0.</p>
             </div>
 
-            <div class="sm:col-span-2 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
+            <div class="max-sm:hidden sm:col-span-2 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
                 <div class="text-sm text-slate-300">Aksi</div>
                 <div class="mt-2 flex gap-3">
                     <button id="hitBtn" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil</button>
@@ -136,6 +136,21 @@
                 <div id="playerHand" class="min-h-[140px] sm:min-h-[170px] flex flex-wrap items-center gap-3 mt-2"></div>
             </div>
         </section>
+
+        <!-- Controls Mobile -->
+        <section class="mt-4 grid sm:grid-cols-3 gap-3">
+            <div class="sm:hidden sm:col-span-2 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
+                <div class="text-sm text-slate-300">Aksi</div>
+                <div class="mt-2 flex gap-3 flex-row-reverse">
+                    <!-- Gunakan ID berbeda untuk mobile -->
+                    <button id="hitBtnMobile" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil</button>
+                    <button id="standBtnMobile" class="rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Sudahi</button>
+                    <button id="newRoundBtnMobile" class="rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 transition px-4 py-2 hidden">Ronde Baru</button>
+                </div>
+                <div id="statusMobile" class="mt-3 text-slate-300"></div>
+            </div>
+        </section>
+
 
         <footer class="mt-8 text-center text-xs text-slate-500">&copy; <span id="year"></span> JKP Project – Mini Blackjack (untuk edukasi, bukan ajakan bermain judi).</footer>
     </div>
@@ -194,6 +209,26 @@
         };
 
         els.year.textContent = new Date().getFullYear();
+
+        // ===== helpers for syncing desktop + mobile controls/status =====
+        function statusNodes() {
+            return Array.from(document.querySelectorAll('#status, #statusMobile'));
+        }
+
+        function setStatus(text) {
+            statusNodes().forEach(n => n.textContent = text);
+        }
+
+        function controlCollections() {
+            return {
+                hit: Array.from(document.querySelectorAll('#hitBtn, #hitBtnMobile')),
+                stand: Array.from(document.querySelectorAll('#standBtn, #standBtnMobile')),
+                deal: Array.from(document.querySelectorAll('#dealBtn')), // usually only desktop
+                reset: Array.from(document.querySelectorAll('#resetBtn')),
+                newRound: Array.from(document.querySelectorAll('#newRoundBtn, #newRoundBtnMobile'))
+            };
+        }
+
 
         const fmtRupiah = n => `Rp ${n.toLocaleString('id-ID')}`;
 
@@ -318,7 +353,7 @@
             els.playerHand.innerHTML = '';
             els.botTotal.textContent = '0';
             els.playerTotal.textContent = '0';
-            els.status.textContent = '';
+            setStatus('');
             botHiddenCardEl = null;
             playerHand = [];
             botHand = [];
@@ -327,12 +362,14 @@
         function setControls({
             inRound
         }) {
-            els.hitBtn.disabled = !inRound;
-            els.standBtn.disabled = !inRound;
-            // Deal only active when not in round and bet valid
-            els.dealBtn.disabled = inRound || !isBetValid();
-            els.newRoundBtn.classList.toggle('hidden', inRound);
+            const cols = controlCollections();
+            cols.hit.forEach(b => b.disabled = !inRound);
+            cols.stand.forEach(b => b.disabled = !inRound);
+            cols.deal.forEach(b => b.disabled = inRound || !isBetValid());
+            cols.reset.forEach(b => b.disabled = false); // reset selalu aktif
+            cols.newRound.forEach(b => b.classList.toggle('hidden', inRound));
         }
+
 
         function createCardElement(card) {
             const tpl = els.cardTemplate.content.firstElementChild.cloneNode(true);
@@ -411,7 +448,7 @@
             if (currentBet > balance) {
                 currentBet = balance;
                 renderBetFromRaw(String(currentBet));
-                els.status.textContent = 'Taruhan otomatis disesuaikan ke saldo Anda.';
+                setStatus('Taruhan otomatis disesuaikan ke saldo Anda.');
             }
 
             resetTable();
@@ -437,7 +474,7 @@
             });
             botHiddenCardEl = el.querySelector('.card-inner');
 
-            els.status.textContent = 'Giliran kamu: Ambil atau Sudahi.';
+            setStatus('Giliran kamu: Ambil atau Sudahi.');
         }
 
         async function playerHit() {
@@ -451,7 +488,7 @@
             els.playerTotal.textContent = total;
 
             if (total > 21) {
-                els.status.textContent = 'Kamu bust (>21). Kamu kalah.';
+                setStatus('Kamu bust (>21). Kamu kalah.');
                 balance -= currentBet;
                 updateBalanceUI();
                 await revealBotThenFinish();
@@ -460,7 +497,7 @@
 
         async function playerStand() {
             if (!roundActive) return;
-            els.status.textContent = 'Bot berpikir…';
+            setStatus('Bot berpikir…');
             await revealBotThenFinish(true);
         }
 
@@ -504,7 +541,7 @@
             }
 
             updateBalanceUI();
-            els.status.textContent = msg + ` (P:${p} vs B:${b})`;
+            setStatus(msg + ` (P:${p} vs B:${b})`);
             const toastType = msg.toLowerCase().includes('menang') ? 'win' : msg.toLowerCase().includes('kalah') ? 'lose' : 'info';
             showToast(msg, toastType);
 
@@ -533,12 +570,12 @@
             inRound: false
         });
 
-        // event bindings
-        els.dealBtn.addEventListener('click', startRound);
-        els.hitBtn.addEventListener('click', playerHit);
-        els.standBtn.addEventListener('click', playerStand);
-        els.resetBtn.addEventListener('click', resetGame);
-        els.newRoundBtn.addEventListener('click', startRound);
+        // bind to all matching controls (desktop + mobile)
+        Array.from(document.querySelectorAll('#dealBtn')).forEach(b => b.addEventListener('click', startRound));
+        Array.from(document.querySelectorAll('#resetBtn')).forEach(b => b.addEventListener('click', resetGame));
+        Array.from(document.querySelectorAll('#hitBtn, #hitBtnMobile')).forEach(b => b.addEventListener('click', playerHit));
+        Array.from(document.querySelectorAll('#standBtn, #standBtnMobile')).forEach(b => b.addEventListener('click', playerStand));
+        Array.from(document.querySelectorAll('#newRoundBtn, #newRoundBtnMobile')).forEach(b => b.addEventListener('click', startRound));
     </script>
 </body>
 
