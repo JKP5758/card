@@ -63,9 +63,9 @@
 
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
     <div class="max-w-5xl mx-auto p-4 sm:p-6">
-        <header class="flex items-center justify-between gap-4">
+        <header class="flex items-center max-sm:flex-col justify-between gap-4">
             <h1 class="text-xl sm:text-2xl font-bold">Mini Blackjack 21 <span class="text-slate-400 text-base">(beta test)</span></h1>
-            <div class="text-right">
+            <div class="text-right max-sm:w-full">
                 <div class="text-sm text-slate-400">Saldo</div>
                 <div id="balance" class="text-2xl font-bold">Rp 100.000</div>
             </div>
@@ -75,7 +75,12 @@
         <section class="mt-4 grid sm:grid-cols-3 gap-3">
             <div class="sm:col-span-1 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
                 <label class="block text-sm text-slate-300 mb-1" for="bet">Taruhan</label>
-                <input id="bet" type="number" class="w-full rounded-xl bg-slate-900 border border-slate-700 p-2 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="10000" value="10000" min="1000" step="1000" />
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-2 rounded-xl bg-slate-900/40 text-slate-300">Rp</span>
+                    <input id="bet" type="text" inputmode="numeric" pattern="[0-9.]*"
+                        class="w-full rounded-xl bg-slate-900 border border-slate-700 p-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                        placeholder="10.000" value="10.000" />
+                </div>
                 <div class="mt-3 flex gap-2">
                     <button id="dealBtn" class="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition px-4 py-2 font-semibold">Deal</button>
                     <button id="resetBtn" class="rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 transition px-4 py-2">Reset</button>
@@ -240,9 +245,10 @@
         }) {
             els.hitBtn.disabled = !inRound;
             els.standBtn.disabled = !inRound;
-            els.dealBtn.disabled = inRound;
+            els.dealBtn.disabled = inRound || !isBetValid();
             els.newRoundBtn.classList.toggle('hidden', inRound);
         }
+
 
         // Buat elemen kartu dari template (SELALU mulai tertutup; nanti di-flip sesuai kebutuhan)
         function createCardElement(card) {
@@ -334,8 +340,65 @@
             return deck.pop();
         }
 
+        // ====== BET INPUT HANDLING & VALIDATION ======
+        // helper: format number dengan pemisah titik (Indo)
+        function numberWithDots(n) {
+            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        // ambil nilai taruhan dalam number (integer) dari input (sanitize)
+        function getBetNumeric() {
+            const raw = (els.bet.dataset.raw || '').replace(/\D/g, '');
+            const num = raw === '' ? 0 : parseInt(raw, 10);
+            return Number.isNaN(num) ? 0 : num;
+        }
+
+        // perbarui tampilan input taruhan berdasarkan raw value
+        function renderBetFromRaw(rawDigits) {
+            els.bet.dataset.raw = rawDigits;
+            const formatted = rawDigits === '' ? '' : numberWithDots(rawDigits);
+            els.bet.value = formatted;
+        }
+
+        // apakah nilai taruhan valid (>= 1000 dan <= balance)
+        function isBetValid() {
+            const n = getBetNumeric();
+            return n >= 1000 && n <= balance;
+        }
+
+        // event: ketika user mengetik di input taruhan
+        els.bet.addEventListener('input', (e) => {
+            // ambil hanya digit (buang titik, rp, spasi)
+            const digits = (e.target.value || '').replace(/\D/g, '');
+            renderBetFromRaw(digits);
+            // aktif/nonaktifkan tombol Deal sesuai validitas
+            els.dealBtn.disabled = !isBetValid();
+        });
+
+        // ketika input kehilangan fokus, jika kosong set ke 1000, jika > balance set ke balance
+        els.bet.addEventListener('blur', () => {
+            let val = getBetNumeric();
+            if (val === 0) val = 1000;
+            if (val > balance) val = balance;
+            renderBetFromRaw(String(val));
+            els.dealBtn.disabled = !isBetValid();
+        });
+
+        // inisialisasi default: set raw dan tampilan (jalankan setelah els terdefinisi)
+        renderBetFromRaw(String(currentBet));
+
+
         async function startRound() {
-            currentBet = Math.max(1000, parseInt(els.bet.value || '1000', 10));
+            // ambil taruhan bersih dari input (sudah disanitasi)
+            currentBet = Math.max(1000, getBetNumeric());
+
+            // jika taruhan masih melebihi saldo, koreksi dan tampilkan pesan
+            if (currentBet > balance) {
+                currentBet = balance;
+                renderBetFromRaw(String(currentBet));
+                els.status.textContent = 'Taruhan otomatis disesuaikan ke saldo Anda.';
+            }
+
             resetTable();
             roundActive = true;
             setControls({
