@@ -2,13 +2,12 @@
 <html lang="id">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Mini Blackjack 21 – Edukasi</title>
     <link rel="icon" href="https://jkp.my.id/assets/img/icons/favico.ico" type="image/x-icon" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Tailwind config (optional)
         tailwind.config = {
             theme: {
                 extend: {
@@ -19,10 +18,12 @@
             },
         };
     </script>
-    <!-- GSAP for smooth animations (SRI valid) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtPUBWm67zeAfFC+HrdoE2GanKeocly/VxeLvIqwvCdk7qScg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+        integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtPUBWm67zeAfFC+HrdoE2GanKeocly/VxeLvIqwvCdk7qScg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
     <style>
-        /* Card 3D flip basics */
         .perspective {
             perspective: 1000px;
         }
@@ -41,6 +42,7 @@
 
         .card-inner {
             transform-style: preserve-3d;
+            transition: transform .45s;
         }
 
         .card-face {
@@ -52,11 +54,14 @@
             transform: rotateY(180deg);
         }
 
-        /* Simple back design (polosan) */
         .card-back-design {
             background: linear-gradient(135deg, #0f172a, #1e293b);
             border-radius: 12px;
             border: 2px solid rgba(255, 255, 255, 0.12);
+        }
+
+        #toast {
+            min-width: 180px;
         }
     </style>
 </head>
@@ -75,12 +80,15 @@
         <section class="mt-4 grid sm:grid-cols-3 gap-3">
             <div class="sm:col-span-1 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
                 <label class="block text-sm text-slate-300 mb-1" for="bet">Taruhan</label>
+
+                <!-- visual Rp + input formatted -->
                 <div class="flex items-center gap-2">
                     <span class="px-3 py-2 rounded-xl bg-slate-900/40 text-slate-300">Rp</span>
                     <input id="bet" type="text" inputmode="numeric" pattern="[0-9.]*"
                         class="w-full rounded-xl bg-slate-900 border border-slate-700 p-2 outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="10.000" value="10.000" />
                 </div>
+
                 <div class="mt-3 flex gap-2">
                     <button id="dealBtn" class="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition px-4 py-2 font-semibold">Deal</button>
                     <button id="resetBtn" class="rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 transition px-4 py-2">Reset</button>
@@ -129,7 +137,7 @@
             </div>
         </section>
 
-        <footer class="mt-8 text-center text-xs text-slate-500">&copy; <span id="year"></span> Edu Sim – Mini Blackjack (untuk edukasi peluang, bukan ajakan bermain judi).</footer>
+        <footer class="mt-8 text-center text-xs text-slate-500">&copy; <span id="year"></span> JKP Project – Mini Blackjack (untuk edukasi, bukan ajakan bermain judi).</footer>
     </div>
 
     <!-- Template kartu (depan & belakang) -->
@@ -148,10 +156,15 @@
         </div>
     </template>
 
+    <!-- Toast notifikasi (atas, mirip notifikasi HP) -->
+    <div id="toast" class="hidden fixed left-1/2 transform -translate-x-1/2 top-4 px-4 py-2 rounded-full text-white shadow-lg">
+        <span id="toastMsg" class="text-sm font-bold"></span>
+    </div>
+
     <script>
         // ====== GAME STATE ======
-        const ASSET_PATH = './assets/img'; // letakkan folder gambar kartu di sini, contoh: ./cards/HQ.svg
-        const SUITS = ['H', 'W', 'K', 'S']; // Hati, Wajik, Keriting, Sekop
+        const ASSET_PATH = './assets/img';
+        const SUITS = ['H', 'W', 'K', 'S'];
         const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
         let deck = [];
@@ -160,7 +173,7 @@
         let balance = 100000;
         let currentBet = 10000;
         let roundActive = false;
-        let botHiddenCardEl = null; // reference ke elemen inner kartu face-down bot (untuk di-flip saat reveal)
+        let botHiddenCardEl = null;
 
         const els = {
             balance: document.getElementById('balance'),
@@ -188,17 +201,88 @@
             els.balance.textContent = fmtRupiah(balance);
         }
 
+        // ---- BET formatting & validation helpers ----
+        function numberWithDots(n) {
+            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        function getBetNumeric() {
+            const raw = (els.bet.dataset.raw || els.bet.value || '').toString().replace(/\D/g, '');
+            const num = raw === '' ? 0 : parseInt(raw, 10);
+            return Number.isNaN(num) ? 0 : num;
+        }
+
+        function renderBetFromRaw(rawDigits) {
+            els.bet.dataset.raw = rawDigits;
+            const formatted = rawDigits === '' ? '' : numberWithDots(rawDigits);
+            els.bet.value = formatted;
+        }
+
+        function isBetValid() {
+            const n = getBetNumeric();
+            return n >= 1000 && n <= balance;
+        }
+
+        // bind bet input behavior
+        els.bet.addEventListener('input', (e) => {
+            const digits = (e.target.value || '').replace(/\D/g, '');
+            renderBetFromRaw(digits);
+            els.dealBtn.disabled = !isBetValid();
+        });
+        els.bet.addEventListener('blur', () => {
+            let v = getBetNumeric();
+            if (v === 0) v = 1000;
+            if (v > balance) v = balance;
+            renderBetFromRaw(String(v));
+            els.dealBtn.disabled = !isBetValid();
+        });
+        // initial render
+        renderBetFromRaw(String(currentBet));
+
+        // ---- Toast helpers ----
+        function showToast(message, type = 'info', timeout = 2500) {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMsg');
+            if (!toast || !msg) return;
+            msg.textContent = message;
+            toast.classList.remove('bg-green-600', 'bg-red-600', 'bg-slate-700', 'hidden');
+            if (type === 'win') toast.classList.add('bg-green-600');
+            else if (type === 'lose') toast.classList.add('bg-red-600');
+            else toast.classList.add('bg-slate-700');
+            gsap.fromTo(toast, {
+                y: -60,
+                autoAlpha: 0
+            }, {
+                y: 0,
+                autoAlpha: 1,
+                duration: 0.35,
+                ease: 'power2.out'
+            });
+            if (toast._timeout) clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => hideToast(), timeout);
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            gsap.to(toast, {
+                y: -60,
+                autoAlpha: 0,
+                duration: 0.3,
+                ease: 'power2.in',
+                onComplete: () => toast.classList.add('hidden')
+            });
+        }
+        document.getElementById('toast')?.addEventListener('click', hideToast);
+
         function buildDeck() {
             deck = [];
-            for (const s of SUITS) {
-                for (const r of RANKS) {
-                    deck.push({
-                        suit: s,
-                        rank: r,
-                        img: `${ASSET_PATH}/${s}${r}.svg`
-                    });
-                }
-            }
+            for (const s of SUITS)
+                for (const r of RANKS) deck.push({
+                    suit: s,
+                    rank: r,
+                    img: `${ASSET_PATH}/${s}${r}.svg`
+                });
         }
 
         function shuffle(arr) {
@@ -216,8 +300,8 @@
         }
 
         function handTotal(hand) {
-            let total = 0;
-            let aces = 0;
+            let total = 0,
+                aces = 0;
             for (const c of hand) {
                 total += valueOfCard(c.rank);
                 if (c.rank === 'A') aces++;
@@ -245,22 +329,19 @@
         }) {
             els.hitBtn.disabled = !inRound;
             els.standBtn.disabled = !inRound;
+            // Deal only active when not in round and bet valid
             els.dealBtn.disabled = inRound || !isBetValid();
             els.newRoundBtn.classList.toggle('hidden', inRound);
         }
 
-
-        // Buat elemen kartu dari template (SELALU mulai tertutup; nanti di-flip sesuai kebutuhan)
         function createCardElement(card) {
             const tpl = els.cardTemplate.content.firstElementChild.cloneNode(true);
             const img = tpl.querySelector('img');
             img.src = card.img;
             img.alt = `${card.suit}${card.rank}`;
-            // Catatan: tidak auto-flip di sini; biar animasi flip terjadi SETELAH kartu mendarat.
             return tpl;
         }
 
-        // Hitung posisi global tengah suatu elemen (membantu kalkulasi animasi)
         function centerOf(el) {
             const r = el.getBoundingClientRect();
             return {
@@ -271,25 +352,15 @@
             };
         }
 
-        /**
-         * Animasi kartu terbang dari deck ke container target.
-         * - Kartu SELALU dibuat tertutup saat terbang. Jika perlu terbuka, akan di-flip ketika mendarat.
-         * @param {HTMLElement} targetContainer
-         * @param {{suit:string,rank:string,img:string}} card
-         * @param {{faceDown?:boolean}} opts
-         * @returns {Promise<HTMLElement>} elemen .card hasil akhir di container
-         */
         async function dealCardAnimated(targetContainer, card, {
             faceDown = false
         } = {}) {
-            // 1) Buat elemen kartu (tertutup) dan posisikan absolut di atas <body>
             const cardEl = createCardElement(card);
             document.body.appendChild(cardEl);
             cardEl.style.position = 'absolute';
             cardEl.style.zIndex = 1000;
             cardEl.style.pointerEvents = 'none';
 
-            // 2) Hitung titik awal (pusat deck) dan tetapkan left/top awal
             const deckC = centerOf(els.deckSpot);
             const cardRect = cardEl.getBoundingClientRect();
             const startLeft = deckC.x - cardRect.width / 2;
@@ -297,7 +368,6 @@
             cardEl.style.left = startLeft + 'px';
             cardEl.style.top = startTop + 'px';
 
-            // 3) Siapkan placeholder di target agar kita tahu posisi akhir yang presisi
             const targetDummy = document.createElement('div');
             targetDummy.className = 'card';
             targetContainer.appendChild(targetDummy);
@@ -305,16 +375,14 @@
             const endLeft = targetC.x - cardRect.width / 2;
             const endTop = targetC.y - cardRect.height / 2;
 
-            // 4) Animasi terbang
             await gsap.to(cardEl, {
-                duration: 0.45,
+                duration: .45,
                 left: endLeft,
                 top: endTop,
                 rotation: (Math.random() * 10 - 5),
                 ease: 'power2.out'
             });
 
-            // 5) Pindahkan ke flow container dan reset style absolut
             targetContainer.replaceChild(cardEl, targetDummy);
             cardEl.style.position = 'relative';
             cardEl.style.left = '0px';
@@ -323,12 +391,10 @@
             cardEl.style.zIndex = 'auto';
             cardEl.style.pointerEvents = 'auto';
 
-            // 6) Jika kartu seharusnya terbuka, flip setelah mendarat
             if (!faceDown) {
                 const inner = cardEl.querySelector('.card-inner');
                 requestAnimationFrame(() => inner.classList.add('[transform:rotateY(180deg)]'));
             }
-
             return cardEl;
         }
 
@@ -340,59 +406,8 @@
             return deck.pop();
         }
 
-        // ====== BET INPUT HANDLING & VALIDATION ======
-        // helper: format number dengan pemisah titik (Indo)
-        function numberWithDots(n) {
-            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-        }
-
-        // ambil nilai taruhan dalam number (integer) dari input (sanitize)
-        function getBetNumeric() {
-            const raw = (els.bet.dataset.raw || '').replace(/\D/g, '');
-            const num = raw === '' ? 0 : parseInt(raw, 10);
-            return Number.isNaN(num) ? 0 : num;
-        }
-
-        // perbarui tampilan input taruhan berdasarkan raw value
-        function renderBetFromRaw(rawDigits) {
-            els.bet.dataset.raw = rawDigits;
-            const formatted = rawDigits === '' ? '' : numberWithDots(rawDigits);
-            els.bet.value = formatted;
-        }
-
-        // apakah nilai taruhan valid (>= 1000 dan <= balance)
-        function isBetValid() {
-            const n = getBetNumeric();
-            return n >= 1000 && n <= balance;
-        }
-
-        // event: ketika user mengetik di input taruhan
-        els.bet.addEventListener('input', (e) => {
-            // ambil hanya digit (buang titik, rp, spasi)
-            const digits = (e.target.value || '').replace(/\D/g, '');
-            renderBetFromRaw(digits);
-            // aktif/nonaktifkan tombol Deal sesuai validitas
-            els.dealBtn.disabled = !isBetValid();
-        });
-
-        // ketika input kehilangan fokus, jika kosong set ke 1000, jika > balance set ke balance
-        els.bet.addEventListener('blur', () => {
-            let val = getBetNumeric();
-            if (val === 0) val = 1000;
-            if (val > balance) val = balance;
-            renderBetFromRaw(String(val));
-            els.dealBtn.disabled = !isBetValid();
-        });
-
-        // inisialisasi default: set raw dan tampilan (jalankan setelah els terdefinisi)
-        renderBetFromRaw(String(currentBet));
-
-
         async function startRound() {
-            // ambil taruhan bersih dari input (sudah disanitasi)
             currentBet = Math.max(1000, getBetNumeric());
-
-            // jika taruhan masih melebihi saldo, koreksi dan tampilkan pesan
             if (currentBet > balance) {
                 currentBet = balance;
                 renderBetFromRaw(String(currentBet));
@@ -408,19 +423,18 @@
             buildDeck();
             shuffle(deck);
 
-            // Initial: 1 kartu masing-masing
             const p1 = drawFromDeck();
             playerHand.push(p1);
             await dealCardAnimated(els.playerHand, p1, {
                 faceDown: false
-            }); // mendarat lalu flip
+            });
             els.playerTotal.textContent = handTotal(playerHand);
 
             const b1 = drawFromDeck();
             botHand.push(b1);
             const el = await dealCardAnimated(els.botHand, b1, {
                 faceDown: true
-            }); // tetap tertutup
+            });
             botHiddenCardEl = el.querySelector('.card-inner');
 
             els.status.textContent = 'Giliran kamu: Ambil atau Sudahi.';
@@ -451,7 +465,6 @@
         }
 
         async function revealBotThenFinish(runBotDraw = false) {
-            // Reveal kartu bot yang tertutup dulu
             if (botHiddenCardEl) {
                 botHiddenCardEl.classList.add('[transform:rotateY(180deg)]');
                 await new Promise(r => setTimeout(r, 400));
@@ -459,7 +472,6 @@
             }
 
             if (runBotDraw) {
-                // Bot draw sampai total >= 17
                 while (handTotal(botHand) < 17) {
                     await new Promise(r => setTimeout(r, 350));
                     const c = drawFromDeck();
@@ -488,11 +500,14 @@
                 msg = 'Kamu kalah.';
                 balance -= currentBet;
             } else {
-                msg = 'Seri.'; // no balance change
+                msg = 'Seri.';
             }
 
             updateBalanceUI();
             els.status.textContent = msg + ` (P:${p} vs B:${b})`;
+            const toastType = msg.toLowerCase().includes('menang') ? 'win' : msg.toLowerCase().includes('kalah') ? 'lose' : 'info';
+            showToast(msg, toastType);
+
             roundActive = false;
             setControls({
                 inRound: false
@@ -502,7 +517,9 @@
         function resetGame() {
             balance = 100000;
             updateBalanceUI();
-            els.bet.value = 10000;
+            renderBetFromRaw('10000');
+            els.bet.dataset.raw = '10000';
+            currentBet = 10000;
             roundActive = false;
             resetTable();
             setControls({
@@ -510,12 +527,13 @@
             });
         }
 
-        // ====== INIT ======
+        // INIT
         updateBalanceUI();
         setControls({
             inRound: false
         });
 
+        // event bindings
         els.dealBtn.addEventListener('click', startRound);
         els.hitBtn.addEventListener('click', playerHit);
         els.standBtn.addEventListener('click', playerStand);
