@@ -19,8 +19,8 @@
             },
         };
     </script>
-    <!-- GSAP for smooth animations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" integrity="sha512-7m1U3G4cY2kz1USKq0jL2H+TYmY3p+DFo+AKf3TzqSGK8aH3VEzj2vLhXIO4wZpQ8v8vJ+8mS1o7Y7e7f+8h9A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- GSAP for smooth animations (SRI valid) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtPUBWm67zeAfFC+HrdoE2GanKeocly/VxeLvIqwvCdk7qScg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         /* Card 3D flip basics */
         .perspective {
@@ -64,7 +64,7 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
     <div class="max-w-5xl mx-auto p-4 sm:p-6">
         <header class="flex items-center justify-between gap-4">
-            <h1 class="text-xl sm:text-2xl font-bold">Mini Blackjack 21 <span class="text-slate-400 text-base">(murni gameplay)</span></h1>
+            <h1 class="text-xl sm:text-2xl font-bold">Mini Blackjack 21 <span class="text-slate-400 text-base">(beta test)</span></h1>
             <div class="text-right">
                 <div class="text-sm text-slate-400">Saldo</div>
                 <div id="balance" class="text-2xl font-bold">Rp 100.000</div>
@@ -96,7 +96,7 @@
 
         <!-- Table Area -->
         <section class="mt-6 bg-gradient-to-b from-slate-800/70 to-slate-900 rounded-3xl p-4 sm:p-6 shadow-glow relative overflow-hidden">
-            <!-- Deck visual -->
+            <!-- Deck visual (sumber kartu terbang) -->
             <div id="deckSpot" class="absolute right-4 top-4 card perspective">
                 <div class="card-inner relative w-full h-full rounded-xl">
                     <div class="card-face card-back-design absolute inset-0 grid place-items-center text-slate-300 text-sm">DECK</div>
@@ -104,12 +104,12 @@
             </div>
 
             <!-- Bot Area -->
-            <div class="mb-8">
+            <div class="mb-8 max-sm:mt-24">
                 <div class="flex items-baseline justify-between">
                     <h2 class="text-lg font-semibold">Bot</h2>
                     <div class="text-slate-400">Total: <span id="botTotal">0</span></div>
                 </div>
-                <div id="botHand" class="min-h-[140px] sm:min-h-[170px] flex items-center gap-3 mt-2"></div>
+                <div id="botHand" class="min-h-[140px] sm:min-h-[170px] flex flex-wrap items-center gap-3 mt-2"></div>
             </div>
 
             <hr class="border-slate-700/60 my-4" />
@@ -120,13 +120,14 @@
                     <h2 class="text-lg font-semibold">Kamu</h2>
                     <div class="text-slate-400">Total: <span id="playerTotal">0</span></div>
                 </div>
-                <div id="playerHand" class="min-h-[140px] sm:min-h-[170px] flex items-center gap-3 mt-2"></div>
+                <div id="playerHand" class="min-h-[140px] sm:min-h-[170px] flex flex-wrap items-center gap-3 mt-2"></div>
             </div>
         </section>
 
         <footer class="mt-8 text-center text-xs text-slate-500">&copy; <span id="year"></span> Edu Sim – Mini Blackjack (untuk edukasi peluang, bukan ajakan bermain judi).</footer>
     </div>
 
+    <!-- Template kartu (depan & belakang) -->
     <template id="cardTemplate">
         <div class="card perspective select-none">
             <div class="card-inner relative w-full h-full rounded-xl transition-transform duration-500 ease-out">
@@ -134,9 +135,9 @@
                     <!-- back (tertutup) -->
                     <div class="w-[86%] h-[90%] rounded-lg border border-white/10"></div>
                 </div>
-                <div class="card-face card-back-face absolute inset-0 grid place-items-center bg-white rounded-xl overflow-hidden">
+                <div class="card-face card-back-face absolute inset-0 grid place-items-center overflow-hidden">
                     <!-- front (terbuka) -->
-                    <img class="w-[92%] h-[92%] object-contain" alt="" />
+                    <img class="w-full h-full object-contain" alt="" />
                 </div>
             </div>
         </div>
@@ -154,7 +155,7 @@
         let balance = 100000;
         let currentBet = 10000;
         let roundActive = false;
-        let botHiddenCardEl = null; // reference to face-down card element
+        let botHiddenCardEl = null; // reference ke elemen inner kartu face-down bot (untuk di-flip saat reveal)
 
         const els = {
             balance: document.getElementById('balance'),
@@ -217,7 +218,7 @@
                 if (c.rank === 'A') aces++;
             }
             while (total > 21 && aces > 0) {
-                total -= 10; // treat an Ace as 1 instead of 11
+                total -= 10;
                 aces--;
             }
             return total;
@@ -243,69 +244,84 @@
             els.newRoundBtn.classList.toggle('hidden', inRound);
         }
 
-        function createCardElement(card, {
-            faceDown = false
-        } = {}) {
+        // Buat elemen kartu dari template (SELALU mulai tertutup; nanti di-flip sesuai kebutuhan)
+        function createCardElement(card) {
             const tpl = els.cardTemplate.content.firstElementChild.cloneNode(true);
-            const inner = tpl.querySelector('.card-inner');
             const img = tpl.querySelector('img');
-
             img.src = card.img;
             img.alt = `${card.suit}${card.rank}`;
-
-            if (!faceDown) {
-                // flip to show front
-                inner.classList.add('[transform:rotateY(180deg)]');
-            }
+            // Catatan: tidak auto-flip di sini; biar animasi flip terjadi SETELAH kartu mendarat.
             return tpl;
         }
 
-        function getGlobalPosition(el) {
+        // Hitung posisi global tengah suatu elemen (membantu kalkulasi animasi)
+        function centerOf(el) {
             const r = el.getBoundingClientRect();
             return {
                 x: r.left + r.width / 2 + window.scrollX,
-                y: r.top + r.height / 2 + window.scrollY
+                y: r.top + r.height / 2 + window.scrollY,
+                w: r.width,
+                h: r.height
             };
         }
 
+        /**
+         * Animasi kartu terbang dari deck ke container target.
+         * - Kartu SELALU dibuat tertutup saat terbang. Jika perlu terbuka, akan di-flip ketika mendarat.
+         * @param {HTMLElement} targetContainer
+         * @param {{suit:string,rank:string,img:string}} card
+         * @param {{faceDown?:boolean}} opts
+         * @returns {Promise<HTMLElement>} elemen .card hasil akhir di container
+         */
         async function dealCardAnimated(targetContainer, card, {
             faceDown = false
         } = {}) {
-            // Start at deck position
-            const cardEl = createCardElement(card, {
-                faceDown
-            });
+            // 1) Buat elemen kartu (tertutup) dan posisikan absolut di atas <body>
+            const cardEl = createCardElement(card);
             document.body.appendChild(cardEl);
             cardEl.style.position = 'absolute';
-            cardEl.style.zIndex = 50;
+            cardEl.style.zIndex = 1000;
+            cardEl.style.pointerEvents = 'none';
 
-            const deckPos = getGlobalPosition(els.deckSpot);
+            // 2) Hitung titik awal (pusat deck) dan tetapkan left/top awal
+            const deckC = centerOf(els.deckSpot);
+            const cardRect = cardEl.getBoundingClientRect();
+            const startLeft = deckC.x - cardRect.width / 2;
+            const startTop = deckC.y - cardRect.height / 2;
+            cardEl.style.left = startLeft + 'px';
+            cardEl.style.top = startTop + 'px';
+
+            // 3) Siapkan placeholder di target agar kita tahu posisi akhir yang presisi
             const targetDummy = document.createElement('div');
             targetDummy.className = 'card';
             targetContainer.appendChild(targetDummy);
+            const targetC = centerOf(targetDummy);
+            const endLeft = targetC.x - cardRect.width / 2;
+            const endTop = targetC.y - cardRect.height / 2;
 
-            const targetPos = getGlobalPosition(targetDummy);
-
-            gsap.set(cardEl, {
-                x: deckPos.x - 55,
-                y: deckPos.y - 75,
-                rotation: 0,
-                scale: 1
-            });
+            // 4) Animasi terbang
             await gsap.to(cardEl, {
                 duration: 0.45,
-                x: targetPos.x - 55,
-                y: targetPos.y - 75,
+                left: endLeft,
+                top: endTop,
                 rotation: (Math.random() * 10 - 5),
                 ease: 'power2.out'
             });
 
-            // Move into container flow
+            // 5) Pindahkan ke flow container dan reset style absolut
             targetContainer.replaceChild(cardEl, targetDummy);
             cardEl.style.position = 'relative';
             cardEl.style.left = '0px';
             cardEl.style.top = '0px';
             cardEl.style.transform = '';
+            cardEl.style.zIndex = 'auto';
+            cardEl.style.pointerEvents = 'auto';
+
+            // 6) Jika kartu seharusnya terbuka, flip setelah mendarat
+            if (!faceDown) {
+                const inner = cardEl.querySelector('.card-inner');
+                requestAnimationFrame(() => inner.classList.add('[transform:rotateY(180deg)]'));
+            }
 
             return cardEl;
         }
@@ -329,19 +345,19 @@
             buildDeck();
             shuffle(deck);
 
-            // Initial: 1 card each (player face-up, bot face-down)
+            // Initial: 1 kartu masing-masing
             const p1 = drawFromDeck();
             playerHand.push(p1);
             await dealCardAnimated(els.playerHand, p1, {
                 faceDown: false
-            });
+            }); // mendarat lalu flip
             els.playerTotal.textContent = handTotal(playerHand);
 
             const b1 = drawFromDeck();
             botHand.push(b1);
             const el = await dealCardAnimated(els.botHand, b1, {
                 faceDown: true
-            });
+            }); // tetap tertutup
             botHiddenCardEl = el.querySelector('.card-inner');
 
             els.status.textContent = 'Giliran kamu: Ambil atau Sudahi.';
@@ -358,7 +374,6 @@
             els.playerTotal.textContent = total;
 
             if (total > 21) {
-                // bust
                 els.status.textContent = 'Kamu bust (>21). Kamu kalah.';
                 balance -= currentBet;
                 updateBalanceUI();
@@ -373,7 +388,7 @@
         }
 
         async function revealBotThenFinish(runBotDraw = false) {
-            // Reveal bot first card
+            // Reveal kartu bot yang tertutup dulu
             if (botHiddenCardEl) {
                 botHiddenCardEl.classList.add('[transform:rotateY(180deg)]');
                 await new Promise(r => setTimeout(r, 400));
@@ -381,7 +396,7 @@
             }
 
             if (runBotDraw) {
-                // Bot draws until total >= 17
+                // Bot draw sampai total >= 17
                 while (handTotal(botHand) < 17) {
                     await new Promise(r => setTimeout(r, 350));
                     const c = drawFromDeck();
