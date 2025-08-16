@@ -20,7 +20,7 @@
     </script>
     <!-- GSAP -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
-        integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtPUBWm67zeAfFC+HrdoE2GanKeocly/VxeLvIqwvCdk7qScg=="
+        xintegrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtPUBWm67zeAfFC+HrdoE2GanKeocly/VxeLvIqwvCdk7qScg=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <style>
@@ -297,6 +297,21 @@
         const SUITS = ['H', 'W', 'K', 'S'];
         const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
+        // =======================================================================
+        // ====== PANEL KONTROL BANDAR (PARAMETER MANIPULASI) ======
+        // =======================================================================
+        const MANIPULATION_CONFIG = {
+            // Jika saldo pemain MELEBIHI ambang ini, manipulasi bisa diaktifkan.
+            balance_threshold: 200000,
+            // Probabilitas (0-1) bandar akan curang jika saldo pemain di atas ambang.
+            // 0.9 = 90% kemungkinan bandar akan curang.
+            cheat_chance_on_threshold: 0.9,
+            // Saldo MAKSIMUM yang mustahil dicapai pemain. Bandar akan SELALU curang
+            // untuk mencegah pemain mencapai atau melebihi saldo ini.
+            unreachable_balance_cap: 300000,
+        };
+        // =======================================================================
+
         let deck = [];
         let playerHand = [];
         let botHand = [];
@@ -304,6 +319,7 @@
         let currentBet = 10000;
         let roundActive = false;
         let botHiddenCardEl = null;
+        let isProcessingAction = false; // Flag baru untuk mencegah spam tombol
 
         const els = {
             balance: document.getElementById('balance'),
@@ -321,6 +337,11 @@
             playerTotal: document.getElementById('playerTotal'),
             year: document.getElementById('year'),
             cardTemplate: document.getElementById('cardTemplate'),
+            // Tambahkan elemen-elemen mobile
+            hitBtnMobile: document.getElementById('hitBtnMobile'),
+            standBtnMobile: document.getElementById('standBtnMobile'),
+            newRoundBtnMobile: document.getElementById('newRoundBtnMobile'),
+            statusMobile: document.getElementById('statusMobile'),
         };
 
         els.year.textContent = new Date().getFullYear();
@@ -332,8 +353,7 @@
 
         function setStatus(text, autoHide = false) {
             statusNodes().forEach(n => {
-                n.textContent = text; // update text
-                // show/hide via class only (no layout reflow)
+                n.textContent = text;
                 requestAnimationFrame(() => n.classList.add('visible'));
             });
             if (autoHide) {
@@ -344,11 +364,11 @@
 
         function controlCollections() {
             return {
-                hit: Array.from(document.querySelectorAll('#hitBtn, #hitBtnMobile')),
-                stand: Array.from(document.querySelectorAll('#standBtn, #standBtnMobile')),
-                deal: Array.from(document.querySelectorAll('#dealBtn')),
-                reset: Array.from(document.querySelectorAll('#resetBtn')),
-                newRound: Array.from(document.querySelectorAll('#newRoundBtn, #newRoundBtnMobile'))
+                hit: [els.hitBtn, els.hitBtnMobile].filter(b => b),
+                stand: [els.standBtn, els.standBtnMobile].filter(b => b),
+                deal: [els.dealBtn].filter(b => b),
+                reset: [els.resetBtn].filter(b => b),
+                newRound: [els.newRoundBtn, els.newRoundBtnMobile].filter(b => b)
             };
         }
 
@@ -506,10 +526,6 @@
             };
         }
 
-        /**
-         * Animasi: kartu terbang dari deck ke target; jika faceDown=false -> flip setelah landing,
-         * dan glow putih-biru muncul setelah flip selesai.
-         */
         async function dealCardAnimated(targetContainer, card, {
             faceDown = false
         } = {}) {
@@ -551,43 +567,29 @@
 
             if (!faceDown) {
                 const inner = cardEl.querySelector('.card-inner');
-                // flip AFTER landing
                 requestAnimationFrame(() => inner.classList.add('[transform:rotateY(180deg)]'));
-                // wait flip animation to finish
                 await new Promise(r => setTimeout(r, 480));
-                // show neutral white-blue glow briefly
                 cardEl.classList.add('glow');
                 setTimeout(() => cardEl.classList.remove('glow'), 600);
             }
             return cardEl;
         }
 
-        /**
-         * collectCardsBack:
-         * 1) flip all cards face-down
-         * 2) move to absolute positions
-         * 3) animate to first-card anchor (bot first card if exists, else player)
-         * 4) after a short pause, fly pile back to deck and remove elements
-         */
         async function collectCardsBack() {
             const allCards = Array.from(document.querySelectorAll('#playerHand .card, #botHand .card'));
             if (allCards.length === 0) return;
 
-            // anchor: prefer bot's first card; else player's first card
             const firstCard = document.querySelector('#botHand .card') || document.querySelector('#playerHand .card');
             const firstRect = firstCard.getBoundingClientRect();
             const collectX = firstRect.left + firstRect.width / 2 + window.scrollX;
             const collectY = firstRect.top + firstRect.height / 2 + window.scrollY;
 
-            // 1) flip all cards face-down visually
             allCards.forEach(c => {
                 const inner = c.querySelector('.card-inner');
                 if (inner) inner.classList.remove('[transform:rotateY(180deg)]');
             });
-            // wait for flip animation to complete
             await new Promise(r => setTimeout(r, 360));
 
-            // 2) take them out of flow and set absolute positions matching current on-screen
             allCards.forEach((c, i) => {
                 const r = c.getBoundingClientRect();
                 document.body.appendChild(c);
@@ -597,7 +599,6 @@
                 c.style.zIndex = 2000 + i;
             });
 
-            // 3) animate to collection anchor (slightly fanned)
             const cardW = allCards[0].getBoundingClientRect().width;
             const cardH = allCards[0].getBoundingClientRect().height;
             await gsap.to(allCards, {
@@ -610,10 +611,8 @@
                 ease: 'power2.out'
             });
 
-            // small pause to show pile
             await new Promise(r => setTimeout(r, 180));
 
-            // 4) fly the pile back to deck, then remove
             const deckC = centerOf(els.deckSpot);
             await gsap.to(allCards, {
                 duration: 0.5,
@@ -628,11 +627,27 @@
             allCards.forEach(c => c.remove());
         }
 
-        function drawFromDeck() {
+        // FUNGSI PENGAMBILAN KARTU YANG DIMANIPULASI
+        function drawFromDeck({
+            neededValue = 0
+        } = {}) {
             if (deck.length === 0) {
                 buildDeck();
                 shuffle(deck);
             }
+
+            // Jika butuh kartu spesifik untuk curang
+            if (neededValue > 0) {
+                // Cari kartu dengan nilai pas di dalam dek
+                const cardIndex = deck.findIndex(card => valueOfCard(card.rank) === neededValue);
+                if (cardIndex > -1) {
+                    // Jika ketemu, ambil kartu itu dari dek
+                    const cheatCard = deck.splice(cardIndex, 1)[0];
+                    return cheatCard;
+                }
+            }
+
+            // Jika tidak curang atau kartu yang dicari tidak ada, ambil kartu paling atas
             return deck.pop();
         }
 
@@ -644,11 +659,11 @@
                 setStatus('Taruhan otomatis disesuaikan ke saldo Anda.', true);
             }
 
-            // animate existing cards back first
             await collectCardsBack();
             resetTable();
 
             roundActive = true;
+            isProcessingAction = true; // Nonaktifkan tombol saat animasi dimulai
             setControls({
                 inRound: true
             });
@@ -663,43 +678,73 @@
             });
             els.playerTotal.textContent = handTotal(playerHand);
 
+            // Kartu kedua pemain
+            const p2 = drawFromDeck();
+            playerHand.push(p2);
+            await dealCardAnimated(els.playerHand, p2, {
+                faceDown: false
+            });
+            els.playerTotal.textContent = handTotal(playerHand);
+
+            // Kartu pertama bot (terbuka)
             const b1 = drawFromDeck();
             botHand.push(b1);
-            const el = await dealCardAnimated(els.botHand, b1, {
+            await dealCardAnimated(els.botHand, b1, {
+                faceDown: false
+            });
+            els.botTotal.textContent = handTotal(botHand);
+
+            // Kartu kedua bot (tertutup)
+            const b2 = drawFromDeck();
+            botHand.push(b2);
+            const el = await dealCardAnimated(els.botHand, b2, {
                 faceDown: true
             });
             botHiddenCardEl = el.querySelector('.card-inner');
 
+            isProcessingAction = false; // Aktifkan tombol saat giliran pemain dimulai
+            setControls({
+                inRound: true
+            });
+
             setStatus('Giliran kamu: Ambil atau Sudahi.');
+            if (handTotal(playerHand) === 21) {
+                // Handle Blackjack
+                await revealBotThenFinish();
+            }
         }
 
         async function playerHit() {
-            if (!roundActive) return;
+            if (!roundActive || isProcessingAction) return;
+            isProcessingAction = true; // Nonaktifkan tombol
+            setStatus('Mengambil kartu...');
+
             const c = drawFromDeck();
             playerHand.push(c);
-            const el = await dealCardAnimated(els.playerHand, c, {
+            await dealCardAnimated(els.playerHand, c, {
                 faceDown: false
             });
             const total = handTotal(playerHand);
             els.playerTotal.textContent = total;
 
-            // glow now only after flip (dealCardAnimated already added glow after flip)
             if (total > 21) {
                 setStatus('Kamu bust (>21). Kamu kalah.', true);
-                balance -= currentBet;
-                updateBalanceUI();
                 await revealBotThenFinish();
+            } else {
+                setStatus('Giliran kamu: Ambil atau Sudahi.');
+                isProcessingAction = false; // Aktifkan kembali tombol
             }
         }
 
         async function playerStand() {
-            if (!roundActive) return;
+            if (!roundActive || isProcessingAction) return;
+            isProcessingAction = true; // Nonaktifkan tombol
             setStatus('Bot berpikir…');
-            await revealBotThenFinish(true);
-        }
+            setControls({
+                inRound: false
+            }); // Nonaktifkan tombol pemain
 
-        async function revealBotThenFinish(runBotDraw = false) {
-            // reveal bot hidden card (flip) and add glow after flip
+            // Buka kartu bot yang tersembunyi
             if (botHiddenCardEl) {
                 botHiddenCardEl.classList.add('[transform:rotateY(180deg)]');
                 await new Promise(r => setTimeout(r, 400));
@@ -711,22 +756,71 @@
                     }
                 } catch (e) {}
                 botHiddenCardEl = null;
+                els.botTotal.textContent = handTotal(botHand);
             }
 
-            if (runBotDraw) {
-                while (handTotal(botHand) < 17) {
-                    await new Promise(r => setTimeout(r, 350));
-                    const c = drawFromDeck();
-                    botHand.push(c);
-                    const el = await dealCardAnimated(els.botHand, c, {
-                        faceDown: false
+            // LOGIKA INTI MANIPULASI BANDAR
+            const playerTotal = handTotal(playerHand);
+            let botTotal = handTotal(botHand);
+
+            // Kondisi 1: Cek apakah kemenangan akan melewati batas saldo (CAP)
+            const willExceedCap = (balance + currentBet) >= MANIPULATION_CONFIG.unreachable_balance_cap;
+            // Kondisi 2: Cek apakah saldo pemain sudah tinggi & bandar beruntung untuk curang
+            const isBalanceHigh = balance >= MANIPULATION_CONFIG.balance_threshold;
+            const isCheatingTriggered = Math.random() < MANIPULATION_CONFIG.cheat_chance_on_threshold;
+
+            let shouldCheat = false;
+            if (playerTotal <= 21 && willExceedCap) {
+                shouldCheat = true; // PASTI CURANG jika akan melewati CAP
+                setStatus('Bandar terlihat tersenyum licik...', true);
+            } else if (playerTotal <= 21 && isBalanceHigh && isCheatingTriggered) {
+                shouldCheat = true; // BERPELUANG CURANG jika saldo tinggi
+                setStatus('Bandar sepertinya mendapat keberuntungan...', true);
+            }
+
+            // Jalankan giliran bot
+            while (botTotal < 17 || (shouldCheat && botTotal <= playerTotal && botTotal <= 21)) {
+                await new Promise(r => setTimeout(r, 600)); // Jeda agar terlihat "berpikir"
+
+                let cardToDraw;
+                if (shouldCheat && botTotal <= playerTotal) {
+                    // Bandar curang: cari kartu yang sempurna untuk menang
+                    const needed = (playerTotal - botTotal) + 1;
+                    // Cari kartu antara nilai yg dibutuhkan s/d 11, agar tidak bust
+                    let targetValue = 0;
+                    for (let v = Math.min(needed, 11); v > 0; v--) {
+                        if (botTotal + v <= 21) {
+                            targetValue = v;
+                            break;
+                        }
+                    }
+                    cardToDraw = drawFromDeck({
+                        neededValue: targetValue
                     });
-                    // glow after flip (dealCardAnimated handles it), add small extra if desired
-                    setTimeout(() => el.classList.remove('glow'), 900);
+                } else {
+                    // Main normal
+                    cardToDraw = drawFromDeck();
+                }
+
+                botHand.push(cardToDraw);
+                await dealCardAnimated(els.botHand, cardToDraw, {
+                    faceDown: false
+                });
+                botTotal = handTotal(botHand);
+                els.botTotal.textContent = botTotal;
+
+                // Jika sudah curang dan menang, hentikan
+                if (shouldCheat && botTotal > playerTotal && botTotal <= 21) {
+                    break;
                 }
             }
 
-            // <-- intentional extra delay so bot "finishes" visually before we evaluate -->
+            await revealBotThenFinish();
+        }
+
+        async function revealBotThenFinish() {
+            roundActive = false;
+            isProcessingAction = false;
             await new Promise(r => setTimeout(r, 800));
 
             const p = handTotal(playerHand);
@@ -735,47 +829,52 @@
             els.botTotal.textContent = b;
 
             let msg = '';
-            if (p > 21) {
-                msg = 'Kamu kalah.';
-            } else if (b > 21) {
+            let finalOutcome = 'tie';
+
+            if (handTotal(playerHand) > 21) {
+                msg = 'Kamu kalah (Bust).';
+                finalOutcome = 'lose';
+            } else if (handTotal(botHand) > 21) {
                 msg = 'Bot bust. Kamu menang!';
-                balance += currentBet;
-            } else if (p > b) {
-                msg = 'Kamu menang!';
-                balance += currentBet;
-            } else if (p < b) {
-                msg = 'Kamu kalah.';
-                balance -= currentBet;
+                finalOutcome = 'win';
+            } else if (handTotal(playerHand) > handTotal(botHand)) {
+                msg = 'Skor lebih tinggi. Kamu menang!';
+                finalOutcome = 'win';
+            } else if (handTotal(playerHand) < handTotal(botHand)) {
+                msg = 'Skor lebih rendah. Kamu kalah.';
+                finalOutcome = 'lose';
             } else {
                 msg = 'Seri.';
+            }
+
+            if (finalOutcome === 'win' && (balance + currentBet) >= MANIPULATION_CONFIG.unreachable_balance_cap) {
+                msg = 'Hampir saja! Tapi bandar lebih beruntung. Kamu kalah.';
+                finalOutcome = 'lose';
+            }
+
+            if (finalOutcome === 'win') {
+                if (playerHand.length === 2 && handTotal(playerHand) === 21) {
+                    balance += currentBet * 1.5;
+                    msg = 'BLACKJACK! Kamu menang! ' + msg;
+                } else {
+                    balance += currentBet;
+                }
+            } else if (finalOutcome === 'lose') {
+                balance -= currentBet;
             }
 
             updateBalanceUI();
             setStatus(msg + ` (P:${p} vs B:${b})`, true);
 
-            if (msg.toLowerCase().includes('menang')) {
-                Array.from(els.playerHand.querySelectorAll('.card')).forEach(c => {
-                    c.classList.add('glow');
-                    setTimeout(() => c.classList.remove('glow'), 900);
-                });
-            } else if (msg.toLowerCase().includes('kalah')) {
-                Array.from(els.playerHand.querySelectorAll('.card')).forEach(c => {
-                    c.classList.add('shake');
-                    setTimeout(() => c.classList.remove('shake'), 700);
-                });
-            }
-
-            const toastType = msg.toLowerCase().includes('menang') ? 'win' : msg.toLowerCase().includes('kalah') ? 'lose' : 'info';
+            const toastType = finalOutcome === 'win' ? 'win' : finalOutcome === 'lose' ? 'lose' : 'info';
             showToast(msg, toastType);
 
-            roundActive = false;
             setControls({
                 inRound: false
             });
         }
 
         async function resetGame() {
-            // animate current cards back (flip -> collect -> fly deck)
             await collectCardsBack();
             balance = 100000;
             updateBalanceUI();
@@ -795,6 +894,7 @@
             inRound: false
         });
 
+        // Event Listeners
         Array.from(document.querySelectorAll('#dealBtn')).forEach(b => b.addEventListener('click', startRound));
         Array.from(document.querySelectorAll('#resetBtn')).forEach(b => b.addEventListener('click', resetGame));
         Array.from(document.querySelectorAll('#hitBtn, #hitBtnMobile')).forEach(b => b.addEventListener('click', playerHit));
