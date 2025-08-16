@@ -31,6 +31,7 @@
         .card {
             width: 90px;
             height: 130px;
+            transition: filter 0.3s ease-in-out;
         }
 
         @media (min-width: 640px) {
@@ -60,10 +61,10 @@
             border: 2px solid rgba(255, 255, 255, 0.12);
         }
 
-        /* glow & shake */
+        /* glow & shake (glow = neutral white-blue) */
         .card.glow {
-            filter: drop-shadow(0 0 18px rgba(34, 197, 94, 0.25)) drop-shadow(0 10px 30px rgba(34, 197, 94, 0.08));
-            transform-origin: center;
+            /* Efek glow yang lebih halus */
+            filter: drop-shadow(0 0 8px rgba(190, 230, 255, 0.5)) drop-shadow(0 0 16px rgba(160, 200, 255, 0.3)) drop-shadow(0 0 24px rgba(160, 200, 255, 0.1));
         }
 
         @keyframes shakeX {
@@ -434,6 +435,10 @@
             };
         }
 
+        /**
+         * Animasi: kartu terbang dari deck ke target; jika faceDown=false -> flip setelah landing,
+         * dan glow putih-biru muncul setelah flip selesai.
+         */
         async function dealCardAnimated(targetContainer, card, {
             faceDown = false
         } = {}) {
@@ -475,42 +480,81 @@
 
             if (!faceDown) {
                 const inner = cardEl.querySelector('.card-inner');
+                // flip AFTER landing
                 requestAnimationFrame(() => inner.classList.add('[transform:rotateY(180deg)]'));
+                // wait flip animation to finish
+                await new Promise(r => setTimeout(r, 480));
+                // show neutral white-blue glow briefly
+                cardEl.classList.add('glow');
+                setTimeout(() => cardEl.classList.remove('glow'), 600);
             }
             return cardEl;
         }
 
+        /**
+         * collectCardsBack:
+         * 1) flip all cards face-down
+         * 2) move to absolute positions
+         * 3) animate to first-card anchor (player first card if exists, else bot)
+         * 4) after a short pause, fly pile back to deck and remove elements
+         */
         async function collectCardsBack() {
             const allCards = Array.from(document.querySelectorAll('#playerHand .card, #botHand .card'));
             if (allCards.length === 0) return;
-            const deckC = centerOf(els.deckSpot);
-            const promises = allCards.map(cardEl => new Promise(async (resolve) => {
-                const r = cardEl.getBoundingClientRect();
-                const clone = cardEl;
 
-                const inner = clone.querySelector('.card-inner');
+            // anchor: prefer player's first card; else bot's first card
+            const firstCard = document.querySelector('#playerHand .card') || document.querySelector('#botHand .card');
+            const firstRect = firstCard.getBoundingClientRect();
+            const collectX = firstRect.left + firstRect.width / 2 + window.scrollX;
+            const collectY = firstRect.top + firstRect.height / 2 + window.scrollY;
+
+            // 1) flip all cards face-down visually
+            allCards.forEach(c => {
+                const inner = c.querySelector('.card-inner');
                 if (inner) inner.classList.remove('[transform:rotateY(180deg)]');
+            });
+            // wait for flip animation to complete
+            await new Promise(r => setTimeout(r, 360));
 
-                document.body.appendChild(clone);
-                clone.style.position = 'absolute';
-                clone.style.left = (r.left + window.scrollX) + 'px';
-                clone.style.top = (r.top + window.scrollY) + 'px';
-                clone.style.zIndex = 2000;
+            // 2) take them out of flow and set absolute positions matching current on-screen
+            allCards.forEach((c, i) => {
+                const r = c.getBoundingClientRect();
+                document.body.appendChild(c);
+                c.style.position = 'absolute';
+                c.style.left = (r.left + window.scrollX) + 'px';
+                c.style.top = (r.top + window.scrollY) + 'px';
+                c.style.zIndex = 2000 + i;
+            });
 
-                await gsap.to(clone, {
-                    duration: .5,
-                    left: deckC.x - r.width / 2,
-                    top: deckC.y - r.height / 2,
-                    rotation: 20,
-                    scale: 0.6,
-                    ease: 'power2.in'
-                });
+            // 3) animate to collection anchor (slightly fanned)
+            const cardW = allCards[0].getBoundingClientRect().width;
+            const cardH = allCards[0].getBoundingClientRect().height;
+            await gsap.to(allCards, {
+                duration: 0.45,
+                left: (i) => (collectX - cardW / 2 + (i % 6) * 2),
+                top: (i) => (collectY - cardH / 2 + Math.floor(i / 6) * 2),
+                rotation: () => (Math.random() * 20 - 10),
+                scale: 0.92,
+                stagger: 0.05,
+                ease: 'power2.out'
+            });
 
-                clone.remove();
-                resolve();
-            }));
+            // small pause to show pile
+            await new Promise(r => setTimeout(r, 180));
 
-            await Promise.all(promises);
+            // 4) fly the pile back to deck, then remove
+            const deckC = centerOf(els.deckSpot);
+            await gsap.to(allCards, {
+                duration: 0.5,
+                left: deckC.x - cardW / 2,
+                top: deckC.y - cardH / 2,
+                rotation: 20,
+                scale: 0.6,
+                stagger: 0.03,
+                ease: 'power2.in'
+            });
+
+            allCards.forEach(c => c.remove());
         }
 
         function drawFromDeck() {
@@ -529,6 +573,7 @@
                 setStatus('Taruhan otomatis disesuaikan ke saldo Anda.', true);
             }
 
+            // animate existing cards back first
             await collectCardsBack();
             resetTable();
 
@@ -567,9 +612,7 @@
             const total = handTotal(playerHand);
             els.playerTotal.textContent = total;
 
-            el.classList.add('glow');
-            setTimeout(() => el.classList.remove('glow'), 600);
-
+            // glow now only after flip (dealCardAnimated already added glow after flip)
             if (total > 21) {
                 setStatus('Kamu bust (>21). Kamu kalah.', true);
                 balance -= currentBet;
@@ -585,9 +628,17 @@
         }
 
         async function revealBotThenFinish(runBotDraw = false) {
+            // reveal bot hidden card (flip) and add glow after flip
             if (botHiddenCardEl) {
                 botHiddenCardEl.classList.add('[transform:rotateY(180deg)]');
                 await new Promise(r => setTimeout(r, 400));
+                try {
+                    const botCardEl = botHiddenCardEl.closest('.card');
+                    if (botCardEl) {
+                        botCardEl.classList.add('glow');
+                        setTimeout(() => botCardEl.classList.remove('glow'), 800);
+                    }
+                } catch (e) {}
                 botHiddenCardEl = null;
             }
 
@@ -599,8 +650,8 @@
                     const el = await dealCardAnimated(els.botHand, c, {
                         faceDown: false
                     });
-                    el.classList.add('glow');
-                    setTimeout(() => el.classList.remove('glow'), 700);
+                    // glow after flip (dealCardAnimated handles it), add small extra if desired
+                    setTimeout(() => el.classList.remove('glow'), 900);
                 }
             }
 
@@ -650,6 +701,7 @@
         }
 
         async function resetGame() {
+            // animate current cards back (flip -> collect -> fly deck)
             await collectCardsBack();
             balance = 100000;
             updateBalanceUI();
