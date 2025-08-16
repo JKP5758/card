@@ -60,6 +60,57 @@
             border: 2px solid rgba(255, 255, 255, 0.12);
         }
 
+        /* glow & shake */
+        .card.glow {
+            filter: drop-shadow(0 0 18px rgba(34, 197, 94, 0.25)) drop-shadow(0 10px 30px rgba(34, 197, 94, 0.08));
+            transform-origin: center;
+        }
+
+        @keyframes shakeX {
+            0% {
+                transform: translateX(0)
+            }
+
+            25% {
+                transform: translateX(-6px)
+            }
+
+            50% {
+                transform: translateX(6px)
+            }
+
+            75% {
+                transform: translateX(-4px)
+            }
+
+            100% {
+                transform: translateX(0)
+            }
+        }
+
+        .card.shake {
+            animation: shakeX .5s ease;
+        }
+
+        /* status box to avoid CLS: reserve height and animate opacity only */
+        .status-box {
+            min-height: 1.25rem;
+            display: block;
+        }
+
+        .status-text {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(-4px);
+            transition: opacity .18s ease, transform .18s ease;
+        }
+
+        .status-text.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* toast tweaks */
         #toast {
             min-width: 180px;
         }
@@ -81,7 +132,6 @@
             <div class="sm:col-span-1 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
                 <label class="block text-sm text-slate-300 mb-1" for="bet">Taruhan</label>
 
-                <!-- visual Rp + input formatted -->
                 <div class="flex items-center gap-2">
                     <span class="px-3 py-2 rounded-xl bg-slate-900/40 text-slate-300">Rp</span>
                     <input id="bet" type="text" inputmode="numeric" pattern="[0-9.]*"
@@ -103,20 +153,18 @@
                     <button id="standBtn" class="rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Sudahi</button>
                     <button id="newRoundBtn" class="rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 transition px-4 py-2 hidden">Ronde Baru</button>
                 </div>
-                <div id="status" class="mt-3 text-slate-300"></div>
+                <div class="status-box mt-3 text-slate-300"><span id="status" class="status-text"></span></div>
             </div>
         </section>
 
         <!-- Table Area -->
         <section class="mt-6 bg-gradient-to-b from-slate-800/70 to-slate-900 rounded-3xl p-4 sm:p-6 shadow-glow relative overflow-hidden">
-            <!-- Deck visual (sumber kartu terbang) -->
             <div id="deckSpot" class="absolute right-4 top-4 card perspective">
                 <div class="card-inner relative w-full h-full rounded-xl">
-                    <div class="card-face card-back-design absolute inset-0 grid place-items-center text-slate-300 text-sm">DECK</div>
+                    <div class="card-face card-back-design absolute inset-0 grid place-items-center text-slate-300 text-sm font-bold">DECK</div>
                 </div>
             </div>
 
-            <!-- Bot Area -->
             <div class="mb-8 max-sm:mt-24">
                 <div class="flex items-baseline justify-between">
                     <h2 class="text-lg font-semibold">Bot</h2>
@@ -127,7 +175,6 @@
 
             <hr class="border-slate-700/60 my-4" />
 
-            <!-- Player Area -->
             <div>
                 <div class="flex items-baseline justify-between">
                     <h2 class="text-lg font-semibold">Kamu</h2>
@@ -142,15 +189,13 @@
             <div class="sm:hidden sm:col-span-2 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
                 <div class="text-sm text-slate-300">Aksi</div>
                 <div class="mt-2 flex gap-3 flex-row-reverse">
-                    <!-- Gunakan ID berbeda untuk mobile -->
                     <button id="hitBtnMobile" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil</button>
                     <button id="standBtnMobile" class="rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Sudahi</button>
                     <button id="newRoundBtnMobile" class="rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 transition px-4 py-2 hidden">Ronde Baru</button>
                 </div>
-                <div id="statusMobile" class="mt-3 text-slate-300"></div>
+                <div class="status-box mt-3 text-slate-300"><span id="statusMobile" class="status-text"></span></div>
             </div>
         </section>
-
 
         <footer class="mt-8 text-center text-xs text-slate-500">&copy; <span id="year"></span> JKP Project – Mini Blackjack (untuk edukasi, bukan ajakan bermain judi).</footer>
     </div>
@@ -160,18 +205,16 @@
         <div class="card perspective select-none">
             <div class="card-inner relative w-full h-full rounded-xl transition-transform duration-500 ease-out">
                 <div class="card-face absolute inset-0 card-front grid place-items-center card-back-design">
-                    <!-- back (tertutup) -->
                     <div class="w-[86%] h-[90%] rounded-lg border border-white/10"></div>
                 </div>
                 <div class="card-face card-back-face absolute inset-0 grid place-items-center overflow-hidden">
-                    <!-- front (terbuka) -->
                     <img class="w-full h-full object-contain" alt="" />
                 </div>
             </div>
         </div>
     </template>
 
-    <!-- Toast notifikasi (atas, mirip notifikasi HP) -->
+    <!-- Toast notifikasi -->
     <div id="toast" class="hidden fixed left-1/2 transform -translate-x-1/2 top-4 px-4 py-2 rounded-full text-white shadow-lg">
         <span id="toastMsg" class="text-sm font-bold"></span>
     </div>
@@ -215,20 +258,27 @@
             return Array.from(document.querySelectorAll('#status, #statusMobile'));
         }
 
-        function setStatus(text) {
-            statusNodes().forEach(n => n.textContent = text);
+        function setStatus(text, autoHide = false) {
+            statusNodes().forEach(n => {
+                n.textContent = text; // update text
+                // show/hide via class only (no layout reflow)
+                requestAnimationFrame(() => n.classList.add('visible'));
+            });
+            if (autoHide) {
+                clearTimeout(setStatus._t);
+                setStatus._t = setTimeout(() => statusNodes().forEach(n => n.classList.remove('visible')), 1800);
+            }
         }
 
         function controlCollections() {
             return {
                 hit: Array.from(document.querySelectorAll('#hitBtn, #hitBtnMobile')),
                 stand: Array.from(document.querySelectorAll('#standBtn, #standBtnMobile')),
-                deal: Array.from(document.querySelectorAll('#dealBtn')), // usually only desktop
+                deal: Array.from(document.querySelectorAll('#dealBtn')),
                 reset: Array.from(document.querySelectorAll('#resetBtn')),
                 newRound: Array.from(document.querySelectorAll('#newRoundBtn, #newRoundBtnMobile'))
             };
         }
-
 
         const fmtRupiah = n => `Rp ${n.toLocaleString('id-ID')}`;
 
@@ -236,7 +286,6 @@
             els.balance.textContent = fmtRupiah(balance);
         }
 
-        // ---- BET formatting & validation helpers ----
         function numberWithDots(n) {
             return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
         }
@@ -258,23 +307,20 @@
             return n >= 1000 && n <= balance;
         }
 
-        // bind bet input behavior
         els.bet.addEventListener('input', (e) => {
             const digits = (e.target.value || '').replace(/\D/g, '');
             renderBetFromRaw(digits);
-            els.dealBtn.disabled = !isBetValid();
+            Array.from(document.querySelectorAll('#dealBtn')).forEach(b => b.disabled = !isBetValid());
         });
         els.bet.addEventListener('blur', () => {
             let v = getBetNumeric();
             if (v === 0) v = 1000;
             if (v > balance) v = balance;
             renderBetFromRaw(String(v));
-            els.dealBtn.disabled = !isBetValid();
+            Array.from(document.querySelectorAll('#dealBtn')).forEach(b => b.disabled = !isBetValid());
         });
-        // initial render
         renderBetFromRaw(String(currentBet));
 
-        // ---- Toast helpers ----
         function showToast(message, type = 'info', timeout = 2500) {
             const toast = document.getElementById('toast');
             const msg = document.getElementById('toastMsg');
@@ -366,10 +412,9 @@
             cols.hit.forEach(b => b.disabled = !inRound);
             cols.stand.forEach(b => b.disabled = !inRound);
             cols.deal.forEach(b => b.disabled = inRound || !isBetValid());
-            cols.reset.forEach(b => b.disabled = false); // reset selalu aktif
+            cols.reset.forEach(b => b.disabled = false);
             cols.newRound.forEach(b => b.classList.toggle('hidden', inRound));
         }
-
 
         function createCardElement(card) {
             const tpl = els.cardTemplate.content.firstElementChild.cloneNode(true);
@@ -435,6 +480,39 @@
             return cardEl;
         }
 
+        async function collectCardsBack() {
+            const allCards = Array.from(document.querySelectorAll('#playerHand .card, #botHand .card'));
+            if (allCards.length === 0) return;
+            const deckC = centerOf(els.deckSpot);
+            const promises = allCards.map(cardEl => new Promise(async (resolve) => {
+                const r = cardEl.getBoundingClientRect();
+                const clone = cardEl;
+
+                const inner = clone.querySelector('.card-inner');
+                if (inner) inner.classList.remove('[transform:rotateY(180deg)]');
+
+                document.body.appendChild(clone);
+                clone.style.position = 'absolute';
+                clone.style.left = (r.left + window.scrollX) + 'px';
+                clone.style.top = (r.top + window.scrollY) + 'px';
+                clone.style.zIndex = 2000;
+
+                await gsap.to(clone, {
+                    duration: .5,
+                    left: deckC.x - r.width / 2,
+                    top: deckC.y - r.height / 2,
+                    rotation: 20,
+                    scale: 0.6,
+                    ease: 'power2.in'
+                });
+
+                clone.remove();
+                resolve();
+            }));
+
+            await Promise.all(promises);
+        }
+
         function drawFromDeck() {
             if (deck.length === 0) {
                 buildDeck();
@@ -448,10 +526,12 @@
             if (currentBet > balance) {
                 currentBet = balance;
                 renderBetFromRaw(String(currentBet));
-                setStatus('Taruhan otomatis disesuaikan ke saldo Anda.');
+                setStatus('Taruhan otomatis disesuaikan ke saldo Anda.', true);
             }
 
+            await collectCardsBack();
             resetTable();
+
             roundActive = true;
             setControls({
                 inRound: true
@@ -481,14 +561,17 @@
             if (!roundActive) return;
             const c = drawFromDeck();
             playerHand.push(c);
-            await dealCardAnimated(els.playerHand, c, {
+            const el = await dealCardAnimated(els.playerHand, c, {
                 faceDown: false
             });
             const total = handTotal(playerHand);
             els.playerTotal.textContent = total;
 
+            el.classList.add('glow');
+            setTimeout(() => el.classList.remove('glow'), 600);
+
             if (total > 21) {
-                setStatus('Kamu bust (>21). Kamu kalah.');
+                setStatus('Kamu bust (>21). Kamu kalah.', true);
                 balance -= currentBet;
                 updateBalanceUI();
                 await revealBotThenFinish();
@@ -513,9 +596,11 @@
                     await new Promise(r => setTimeout(r, 350));
                     const c = drawFromDeck();
                     botHand.push(c);
-                    await dealCardAnimated(els.botHand, c, {
+                    const el = await dealCardAnimated(els.botHand, c, {
                         faceDown: false
                     });
+                    el.classList.add('glow');
+                    setTimeout(() => el.classList.remove('glow'), 700);
                 }
             }
 
@@ -541,7 +626,20 @@
             }
 
             updateBalanceUI();
-            setStatus(msg + ` (P:${p} vs B:${b})`);
+            setStatus(msg + ` (P:${p} vs B:${b})`, true);
+
+            if (msg.toLowerCase().includes('menang')) {
+                Array.from(els.playerHand.querySelectorAll('.card')).forEach(c => {
+                    c.classList.add('glow');
+                    setTimeout(() => c.classList.remove('glow'), 900);
+                });
+            } else if (msg.toLowerCase().includes('kalah')) {
+                Array.from(els.playerHand.querySelectorAll('.card')).forEach(c => {
+                    c.classList.add('shake');
+                    setTimeout(() => c.classList.remove('shake'), 700);
+                });
+            }
+
             const toastType = msg.toLowerCase().includes('menang') ? 'win' : msg.toLowerCase().includes('kalah') ? 'lose' : 'info';
             showToast(msg, toastType);
 
@@ -551,7 +649,8 @@
             });
         }
 
-        function resetGame() {
+        async function resetGame() {
+            await collectCardsBack();
             balance = 100000;
             updateBalanceUI();
             renderBetFromRaw('10000');
@@ -570,12 +669,34 @@
             inRound: false
         });
 
-        // bind to all matching controls (desktop + mobile)
         Array.from(document.querySelectorAll('#dealBtn')).forEach(b => b.addEventListener('click', startRound));
         Array.from(document.querySelectorAll('#resetBtn')).forEach(b => b.addEventListener('click', resetGame));
         Array.from(document.querySelectorAll('#hitBtn, #hitBtnMobile')).forEach(b => b.addEventListener('click', playerHit));
         Array.from(document.querySelectorAll('#standBtn, #standBtnMobile')).forEach(b => b.addEventListener('click', playerStand));
         Array.from(document.querySelectorAll('#newRoundBtn, #newRoundBtnMobile')).forEach(b => b.addEventListener('click', startRound));
+
+        // fallback helpers (do not remove)
+        function numberWithDots(n) {
+            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        function renderBetFromRaw(rawDigits) {
+            try {
+                els.bet.dataset.raw = rawDigits;
+                const formatted = rawDigits === '' ? '' : numberWithDots(rawDigits);
+                els.bet.value = formatted;
+            } catch (e) {}
+        }
+
+        function getBetNumeric() {
+            try {
+                const raw = (els.bet.dataset.raw || els.bet.value || '').toString().replace(/\D/g, '');
+                const num = raw === '' ? 0 : parseInt(raw, 10);
+                return Number.isNaN(num) ? 0 : num;
+            } catch (e) {
+                return 0;
+            }
+        }
     </script>
 </body>
 
