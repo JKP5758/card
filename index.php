@@ -363,8 +363,8 @@
         // - limit_rigged: >= this value => mustahil menang (bandar selalu menang)
         // - riggedChance: peluang (0..1) pada rentang [limit_fair, limit_rigged) dimana kemenangan pemain diubah jadi kalah
         const RIG_CONFIG = {
-            limit_fair: 200000,   // < 200k => fair
-            limit_rigged: 300000, // >= 300k => mustahil menang
+            limit_fair: 750000,   // < 200k => fair
+            limit_rigged: 1000000, // >= 300k => mustahil menang
             riggedChance: 0.2     // 20% chance curang pada 200k - 300k
         };
 
