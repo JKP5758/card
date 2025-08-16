@@ -24,20 +24,32 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <style>
+        :root {
+            --card-w: 90px;
+            --card-h: 130px;
+        }
+
+        @media (min-width: 640px) {
+            :root {
+                --card-w: 110px;
+                --card-h: 160px;
+            }
+        }
+
         .perspective {
             perspective: 1000px;
         }
 
         .card {
-            width: 90px;
-            height: 130px;
+            width: var(--card-w);
+            height: var(--card-h);
             transition: filter 0.3s ease-in-out;
         }
 
         @media (min-width: 640px) {
             .card {
-                width: 110px;
-                height: 160px;
+                width: var(--card-w);
+                height: var(--card-h);
             }
         }
 
@@ -64,7 +76,7 @@
         /* glow & shake (glow = neutral white-blue) */
         .card.glow {
             /* Efek glow yang lebih halus */
-            filter: drop-shadow(0 0 8px rgba(190, 230, 255, 0.5)) drop-shadow(0 0 16px rgba(160, 200, 255, 0.3)) drop-shadow(0 0 24px rgba(160, 200, 255, 0.1));
+            filter: drop-shadow(0 0 8px rgba(190, 230, 255, 0.6)) drop-shadow(0 0 16px rgba(160, 200, 255, 0.35)) drop-shadow(0 0 24px rgba(160, 200, 255, 0.12));
         }
 
         @keyframes shakeX {
@@ -109,6 +121,62 @@
         .status-text.visible {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        /* Deck visual - stacked cards */
+        .deck-spot {
+            width: calc(var(--card-w));
+            height: calc(var(--card-h));
+            pointer-events: none;
+        }
+
+        .deck-stack {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .deck-stack .deck-card {
+            position: absolute;
+            inset: 0;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #0b1220 0%, #12202b 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: grid;
+            place-items: center;
+            color: #cbd5e1;
+            font-weight: 700;
+            font-size: 12px;
+            transform-origin: center;
+            box-shadow: 0 6px 18px rgba(2, 6, 23, 0.6);
+        }
+
+        .deck-stack .deck-card.layer-1 {
+            transform: translate(8px, -6px) rotate(-6deg);
+            z-index: 1;
+            opacity: 0.9;
+        }
+
+        .deck-stack .deck-card.layer-2 {
+            transform: translate(4px, -3px) rotate(-3deg);
+            z-index: 2;
+            opacity: 0.95;
+        }
+
+        .deck-stack .deck-card.front {
+            transform: translate(0px, 0px) rotate(0deg);
+            z-index: 3;
+            background: linear-gradient(180deg, #0f172a, #172033);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #e6f0ff;
+            font-size: 13px;
+            letter-spacing: .4px;
+        }
+
+        /* hands container tweaks - preserve original layout behavior */
+        #botHand,
+        #playerHand {
+            min-height: 140px;
         }
 
         /* toast tweaks */
@@ -160,13 +228,16 @@
 
         <!-- Table Area -->
         <section class="mt-6 bg-gradient-to-b from-slate-800/70 to-slate-900 rounded-3xl p-4 sm:p-6 shadow-glow relative overflow-hidden">
-            <div id="deckSpot" class="absolute right-4 top-4 card perspective">
-                <div class="card-inner relative w-full h-full rounded-xl">
-                    <div class="card-face card-back-design absolute inset-0 grid place-items-center text-slate-300 text-sm font-bold">DECK</div>
+            <!-- Deck (styled as a small stacked deck) -->
+            <div id="deckSpot" class="absolute right-4 top-4 perspective deck-spot" aria-hidden="true">
+                <div class="deck-stack">
+                    <div class="deck-card layer-1"></div>
+                    <div class="deck-card layer-2"></div>
+                    <div class="deck-card front">DECK</div>
                 </div>
             </div>
 
-            <div class="mb-8 max-sm:mt-24">
+            <div class="mb-8 max-sm:mt-32 sm:mr-32">
                 <div class="flex items-baseline justify-between">
                     <h2 class="text-lg font-semibold">Bot</h2>
                     <div class="text-slate-400">Total: <span id="botTotal">0</span></div>
@@ -190,8 +261,8 @@
             <div class="sm:hidden sm:col-span-2 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
                 <div class="text-sm text-slate-300">Aksi</div>
                 <div class="mt-2 flex gap-3 flex-row-reverse">
-                    <button id="hitBtnMobile" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil</button>
                     <button id="standBtnMobile" class="rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Sudahi</button>
+                    <button id="hitBtnMobile" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil</button>
                     <button id="newRoundBtnMobile" class="rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 transition px-4 py-2 hidden">Ronde Baru</button>
                 </div>
                 <div class="status-box mt-3 text-slate-300"><span id="statusMobile" class="status-text"></span></div>
@@ -495,15 +566,15 @@
          * collectCardsBack:
          * 1) flip all cards face-down
          * 2) move to absolute positions
-         * 3) animate to first-card anchor (player first card if exists, else bot)
+         * 3) animate to first-card anchor (bot first card if exists, else player)
          * 4) after a short pause, fly pile back to deck and remove elements
          */
         async function collectCardsBack() {
             const allCards = Array.from(document.querySelectorAll('#playerHand .card, #botHand .card'));
             if (allCards.length === 0) return;
 
-            // anchor: prefer player's first card; else bot's first card
-            const firstCard = document.querySelector('#playerHand .card') || document.querySelector('#botHand .card');
+            // anchor: prefer bot's first card; else player's first card
+            const firstCard = document.querySelector('#botHand .card') || document.querySelector('#playerHand .card');
             const firstRect = firstCard.getBoundingClientRect();
             const collectX = firstRect.left + firstRect.width / 2 + window.scrollX;
             const collectY = firstRect.top + firstRect.height / 2 + window.scrollY;
@@ -654,6 +725,9 @@
                     setTimeout(() => el.classList.remove('glow'), 900);
                 }
             }
+
+            // <-- intentional extra delay so bot "finishes" visually before we evaluate -->
+            await new Promise(r => setTimeout(r, 800));
 
             const p = handTotal(playerHand);
             const b = handTotal(botHand);
