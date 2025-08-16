@@ -183,6 +183,11 @@
         #toast {
             min-width: 180px;
         }
+
+        /* preset button animation */
+        .scale-95 {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 
@@ -196,8 +201,8 @@
             </div>
         </header>
 
-        <!-- Controls -->
-        <section class="mt-4 grid sm:grid-cols-3 gap-3">
+        <!-- Controls Desktop -->
+        <section class="mt-4 max-sm:hidden grid sm:grid-cols-3 gap-3">
             <div class="sm:col-span-1 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-slate-300">Aksi Taruhan</div>
@@ -215,10 +220,18 @@
                     <button id="raiseBtn" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hidden">Naikkan</button>
                     <button id="resetBtn" class="rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 transition px-4 py-2">Reset</button>
                 </div>
+                
+                <!-- Preset buttons - hanya muncul saat dalam ronde -->
+                <div id="presetButtons" class="mt-2 grid grid-cols-4 gap-1 hidden">
+                    <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-5000">-5k</button>
+                    <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-10000">-10k</button>
+                    <button class="preset-btn rounded-lg bg-green-600 hover:bg-green-500 active:bg-green-700 transition px-2 py-1 text-xs font-semibold" data-value="5000">+5k</button>
+                    <button class="preset-btn rounded-lg bg-green-600 hover:bg-green-500 active:bg-green-700 transition px-2 py-1 text-xs font-semibold" data-value="10000">+10k</button>
+                </div>
                 <p class="text-xs text-slate-400 mt-2">Aturan payout: Menang = +total taruhan, Kalah = -total taruhan, Seri = 0.</p>
             </div>
 
-            <div class="max-sm:hidden sm:col-span-2 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
+            <div class="sm:col-span-2 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-slate-300">Aksi</div>
                 </div>
@@ -274,6 +287,37 @@
             </div>
         </section>
 
+        <!-- Aksi Taruhan Mobile - di bagian bawah -->
+        <section class="mt-4 sm:hidden">
+            <div class="bg-slate-800/60 rounded-2xl p-4 shadow-glow">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-slate-300">Aksi Taruhan</div>
+                    <div class="text-xs text-slate-400">Total: <span id="prizePoolMobile" class="font-bold text-base text-white">Rp 0</span></div>
+                </div>
+                <label class="block text-xs text-slate-300 mb-1 mt-2" for="betMobile">Jumlah Taruhan</label>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-2 rounded-xl bg-slate-900/40 text-slate-300">Rp</span>
+                    <input id="betMobile" type="text" inputmode="numeric" pattern="[0-9.]*"
+                        class="w-full rounded-xl bg-slate-900 border border-slate-700 p-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                        placeholder="10.000" value="10.000" />
+                </div>
+                <div class="mt-3 flex gap-2">
+                    <button id="dealBtnMobile" class="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition px-4 py-2 font-semibold">Deal</button>
+                    <button id="raiseBtnMobile" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hidden">Naikkan</button>
+                    <button id="resetBtnMobile" class="rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 transition px-4 py-2">Reset</button>
+                </div>
+                
+                <!-- Preset buttons mobile - hanya muncul saat dalam ronde -->
+                <div id="presetButtonsMobile" class="mt-2 grid grid-cols-4 gap-1 hidden">
+                    <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-5000">-5k</button>
+                    <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-10000">-10k</button>
+                    <button class="preset-btn rounded-lg bg-green-600 hover:bg-green-500 active:bg-green-700 transition px-2 py-1 text-xs font-semibold" data-value="5000">+5k</button>
+                    <button class="preset-btn rounded-lg bg-green-600 hover:bg-green-500 active:bg-green-700 transition px-2 py-1 text-xs font-semibold" data-value="10000">+10k</button>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">Aturan payout: Menang = +total taruhan, Kalah = -total taruhan, Seri = 0.</p>
+            </div>
+        </section>
+
         <footer class="mt-8 text-center text-xs text-slate-500">&copy; <span id="year"></span> JKP Project – Mini Blackjack (untuk edukasi, bukan ajakan bermain judi).</footer>
     </div>
 
@@ -311,6 +355,102 @@
         let botHiddenCardEl = null;
         let isProcessingAction = false; // Flag untuk mencegah spam tombol
 
+        // =========================
+        // RIGGING CONFIG (editable)
+        // =========================
+        // Atur parameter berikut sesuai kebutuhan presentasi.
+        // - limit_fair: < this value => fair play
+        // - limit_rigged: >= this value => mustahil menang (bandar selalu menang)
+        // - riggedChance: peluang (0..1) pada rentang [limit_fair, limit_rigged) dimana kemenangan pemain diubah jadi kalah
+        const RIG_CONFIG = {
+            limit_fair: 200000,   // < 200k => fair
+            limit_rigged: 300000, // >= 300k => mustahil menang
+            riggedChance: 0.2     // 20% chance curang pada 200k - 300k
+        };
+
+        // Flag untuk menandai apakah rigging sedang aktif
+        let isRiggingActive = false;
+        let riggedCards = []; // Kartu yang akan digunakan untuk rigging
+
+        function applyRigging(playerBalance, normalResult) {
+            // normalResult: 'win' | 'lose' | 'draw'
+            if (playerBalance < RIG_CONFIG.limit_fair) {
+                return normalResult; // fair play
+            }
+
+            if (playerBalance >= RIG_CONFIG.limit_fair && playerBalance < RIG_CONFIG.limit_rigged) {
+                // ada peluang mengubah kemenangan jadi kalah
+                if (normalResult === 'win') {
+                    if (Math.random() < RIG_CONFIG.riggedChance) {
+                        return 'lose';
+                    }
+                }
+                return normalResult;
+            }
+
+            if (playerBalance >= RIG_CONFIG.limit_rigged) {
+                // mustahil menang di atas ambang ini
+                if (normalResult === 'win') {
+                    return 'lose';
+                }
+                return normalResult;
+            }
+
+            return normalResult;
+        }
+
+        // Fungsi untuk mengecek apakah perlu rigging berdasarkan saldo + potensi kemenangan
+        function needsRigging(playerBalance, potentialWin) {
+            const totalAfterWin = playerBalance + potentialWin;
+            return totalAfterWin >= RIG_CONFIG.limit_rigged;
+        }
+
+        // Fungsi untuk mendapatkan kartu yang tepat untuk rigging
+        function getRiggedCard(targetTotal, currentTotal) {
+            const neededValue = targetTotal - currentTotal;
+            
+            // Cari kartu yang ada di deck dengan nilai yang tepat
+            let perfectCard = null;
+            let perfectCardIndex = -1;
+            
+            // Cari kartu dengan nilai yang tepat
+            for (let i = 0; i < deck.length; i++) {
+                const card = deck[i];
+                const cardValue = valueOfCard(card.rank);
+                if (cardValue === neededValue) {
+                    perfectCard = card;
+                    perfectCardIndex = i;
+                    break;
+                }
+            }
+            
+            // Jika tidak ada kartu dengan nilai tepat, cari kartu yang aman
+            if (!perfectCard) {
+                for (let i = 0; i < deck.length; i++) {
+                    const card = deck[i];
+                    const cardValue = valueOfCard(card.rank);
+                    if (currentTotal + cardValue <= 21) {
+                        perfectCard = card;
+                        perfectCardIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            // Jika masih tidak ada, ambil kartu pertama dari deck
+            if (!perfectCard) {
+                perfectCard = deck[0];
+                perfectCardIndex = 0;
+            }
+            
+            // Hapus kartu dari deck
+            if (perfectCardIndex > -1) {
+                deck.splice(perfectCardIndex, 1);
+            }
+            
+            return perfectCard;
+        }
+
         const els = {
             balance: document.getElementById('balance'),
             bet: document.getElementById('bet'),
@@ -334,6 +474,15 @@
             hitBtnMobile: document.getElementById('hitBtnMobile'),
             standBtnMobile: document.getElementById('standBtnMobile'),
             statusMobile: document.getElementById('statusMobile'),
+            // Tambahkan elemen preset buttons
+            presetButtons: document.getElementById('presetButtons'),
+            // Tambahkan elemen mobile untuk aksi taruhan
+            betMobile: document.getElementById('betMobile'),
+            dealBtnMobile: document.getElementById('dealBtnMobile'),
+            raiseBtnMobile: document.getElementById('raiseBtnMobile'),
+            resetBtnMobile: document.getElementById('resetBtnMobile'),
+            presetButtonsMobile: document.getElementById('presetButtonsMobile'),
+            prizePoolMobile: document.getElementById('prizePoolMobile'),
         };
 
         els.year.textContent = new Date().getFullYear();
@@ -358,9 +507,9 @@
             return {
                 hit: [els.hitBtn, els.hitBtnMobile].filter(b => b),
                 stand: [els.standBtn, els.standBtnMobile].filter(b => b),
-                deal: [els.dealBtn].filter(b => b),
-                reset: [els.resetBtn].filter(b => b),
-                raise: [els.raiseBtn].filter(b => b),
+                deal: [els.dealBtn, els.dealBtnMobile].filter(b => b),
+                reset: [els.resetBtn, els.resetBtnMobile].filter(b => b),
+                raise: [els.raiseBtn, els.raiseBtnMobile].filter(b => b),
             };
         }
 
@@ -375,6 +524,9 @@
 
         function updatePrizePoolUI() {
             els.prizePool.textContent = fmtRupiah(totalBet);
+            if (els.prizePoolMobile) {
+                els.prizePoolMobile.textContent = fmtRupiah(totalBet);
+            }
         }
 
         function numberWithDots(n) {
@@ -398,12 +550,19 @@
             const raiseAmount = getBetNumeric(els.bet);
             const isEnabled = roundActive && !isProcessingAction && raiseAmount > 0 && balance >= raiseAmount;
             els.raiseBtn.disabled = !isEnabled;
+            if (els.raiseBtnMobile) {
+                els.raiseBtnMobile.disabled = !isEnabled;
+            }
         }
 
         // Tangani input untuk nominal taruhan
         els.bet.addEventListener('input', (e) => {
             const digits = (e.target.value || '').replace(/\D/g, '');
             renderBetFromRaw(digits, els.bet);
+            // Sync dengan input mobile
+            if (els.betMobile) {
+                renderBetFromRaw(digits, els.betMobile);
+            }
             // Perbarui status tombol setiap kali input berubah
             updateRaiseButtonState();
         });
@@ -412,9 +571,35 @@
             if (v === 0) v = 1000;
             if (v > balance) v = balance;
             renderBetFromRaw(String(v), els.bet);
+            // Sync dengan input mobile
+            if (els.betMobile) {
+                renderBetFromRaw(String(v), els.betMobile);
+            }
             // Perbarui status tombol setelah input kehilangan fokus
             updateRaiseButtonState();
         });
+
+        // Tangani input untuk nominal taruhan mobile
+        if (els.betMobile) {
+            els.betMobile.addEventListener('input', (e) => {
+                const digits = (e.target.value || '').replace(/\D/g, '');
+                renderBetFromRaw(digits, els.betMobile);
+                // Sync dengan input desktop
+                renderBetFromRaw(digits, els.bet);
+                // Perbarui status tombol setiap kali input berubah
+                updateRaiseButtonState();
+            });
+            els.betMobile.addEventListener('blur', () => {
+                let v = getBetNumeric(els.betMobile);
+                if (v === 0) v = 1000;
+                if (v > balance) v = balance;
+                renderBetFromRaw(String(v), els.betMobile);
+                // Sync dengan input desktop
+                renderBetFromRaw(String(v), els.bet);
+                // Perbarui status tombol setelah input kehilangan fokus
+                updateRaiseButtonState();
+            });
+        }
 
         function showToast(message, type = 'info', timeout = 2500) {
             const toast = document.getElementById('toast');
@@ -509,6 +694,10 @@
             cols.deal.forEach(b => b.classList.toggle('hidden', inRound));
             cols.raise.forEach(b => b.classList.toggle('hidden', !inRound));
             cols.reset.forEach(b => b.disabled = false);
+
+            // Tampilkan/sembunyikan preset buttons
+            els.presetButtons.classList.toggle('hidden', !inRound);
+            els.presetButtonsMobile.classList.toggle('hidden', !inRound);
 
             // Panggil fungsi untuk memperbarui status tombol "Naikkan"
             updateRaiseButtonState();
@@ -663,6 +852,9 @@
             updateBalanceUI();
             updatePrizePoolUI();
             renderBetFromRaw('0', els.bet); // Reset input taruhan setelah "Deal"
+            if (els.betMobile) {
+                renderBetFromRaw('0', els.betMobile);
+            }
 
             await collectCardsBack();
             resetTable();
@@ -769,14 +961,63 @@
             setStatus("Giliran bandar...");
             await new Promise(r => setTimeout(r, 1000));
 
-            while (handTotal(botHand) < 17) {
-                const card = drawFromDeck();
-                botHand.push(card);
-                await dealCardAnimated(els.botHand, card, {
-                    faceDown: false
-                });
-                els.botTotal.textContent = handTotal(botHand);
-                await new Promise(r => setTimeout(r, 700));
+            // Cek apakah perlu rigging
+            const playerTotal = handTotal(playerHand);
+            const potentialWin = totalBet * 2;
+            isRiggingActive = needsRigging(balance, potentialWin);
+
+            if (isRiggingActive) {
+                // Rigging aktif - bot akan mendapatkan kartu yang tepat
+                const botCurrentTotal = handTotal(botHand);
+                let targetTotal;
+                
+                // Tentukan target total bot
+                if (playerTotal <= 21) {
+                    // Jika pemain 20, bot bisa dapat 21 atau 20
+                    if (playerTotal === 20) {
+                        targetTotal = Math.random() < 0.7 ? 21 : 20; // 70% chance dapat 21, 30% chance seri
+                    } else if (playerTotal === 21) {
+                        targetTotal = 21; // Seri dengan blackjack
+                    } else {
+                        targetTotal = Math.max(playerTotal + 1, 17); // Minimal 17, atau lebih tinggi dari pemain
+                    }
+                } else {
+                    targetTotal = 17; // Pemain bust, bot cukup 17
+                }
+
+                // Bot draw sampai mencapai target atau bust
+                while (handTotal(botHand) < targetTotal && handTotal(botHand) < 21) {
+                    let card;
+                    if (handTotal(botHand) < targetTotal) {
+                        // Gunakan kartu yang tepat untuk mencapai target
+                        card = getRiggedCard(targetTotal, handTotal(botHand));
+                        // Hapus kartu dari deck agar tidak double
+                        const cardIndex = deck.findIndex(c => c.suit === card.suit && c.rank === card.rank);
+                        if (cardIndex > -1) {
+                            deck.splice(cardIndex, 1);
+                        }
+                    } else {
+                        card = drawFromDeck();
+                    }
+                    
+                    botHand.push(card);
+                    await dealCardAnimated(els.botHand, card, {
+                        faceDown: false
+                    });
+                    els.botTotal.textContent = handTotal(botHand);
+                    await new Promise(r => setTimeout(r, 700));
+                }
+            } else {
+                // Normal play - bot draw sampai >= 17
+                while (handTotal(botHand) < 17) {
+                    const card = drawFromDeck();
+                    botHand.push(card);
+                    await dealCardAnimated(els.botHand, card, {
+                        faceDown: false
+                    });
+                    els.botTotal.textContent = handTotal(botHand);
+                    await new Promise(r => setTimeout(r, 700));
+                }
             }
 
             checkWinner();
@@ -803,7 +1044,12 @@
                 result = 'draw';
                 setStatus("Seri.");
             }
+
             await new Promise(r => setTimeout(r, 1500));
+
+            // Reset rigging flag
+            isRiggingActive = false;
+
             endRound(result);
         }
 
@@ -827,6 +1073,9 @@
             });
             // Reset input taruhan ke nilai default setelah ronde berakhir
             renderBetFromRaw('10000', els.bet);
+            if (els.betMobile) {
+                renderBetFromRaw('10000', els.betMobile);
+            }
             updateRaiseButtonState(); // Perbarui status tombol setelah ronde berakhir
         }
 
@@ -841,6 +1090,9 @@
                 updateBalanceUI();
                 updatePrizePoolUI();
                 renderBetFromRaw('0', els.bet); // Reset input taruhan setelah "Raise"
+                if (els.betMobile) {
+                    renderBetFromRaw('0', els.betMobile);
+                }
                 showToast(`Taruhan dinaikkan sebesar ${fmtRupiah(raiseAmount)}`, 'info');
             } else {
                 showToast("Jumlah taruhan tidak valid atau saldo tidak mencukupi.", "info");
@@ -858,6 +1110,7 @@
             totalBet = 0; // Pastikan totalBet direset saat game direset
             updatePrizePoolUI();
             roundActive = false;
+            isRiggingActive = false; // Reset rigging flag
             setControls({
                 inRound: false
             });
@@ -867,6 +1120,9 @@
         // Global event listeners
         window.addEventListener('load', () => {
             renderBetFromRaw('10000', els.bet);
+            if (els.betMobile) {
+                renderBetFromRaw('10000', els.betMobile);
+            }
             resetTable();
             updateBalanceUI();
             setControls({
@@ -876,13 +1132,43 @@
 
         // Event listener untuk Deal
         els.dealBtn.addEventListener('click', startRound);
+        if (els.dealBtnMobile) {
+            els.dealBtnMobile.addEventListener('click', startRound);
+        }
+        
         // Event listener untuk Reset
         els.resetBtn.addEventListener('click', resetGame);
+        if (els.resetBtnMobile) {
+            els.resetBtnMobile.addEventListener('click', resetGame);
+        }
+        
         // Event listener untuk Hit dan Stand
         Array.from(document.querySelectorAll('#hitBtn, #hitBtnMobile')).forEach(b => b.addEventListener('click', playerHit));
         Array.from(document.querySelectorAll('#standBtn, #standBtnMobile')).forEach(b => b.addEventListener('click', playerStand));
+        
         // Event listener untuk Raise
         els.raiseBtn.addEventListener('click', raiseBet);
+        if (els.raiseBtnMobile) {
+            els.raiseBtnMobile.addEventListener('click', raiseBet);
+        }
+
+        // Event listener untuk preset buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('preset-btn')) {
+                const value = parseInt(e.target.dataset.value);
+                const currentValue = getBetNumeric(els.bet);
+                const newValue = Math.max(0, currentValue + value);
+                renderBetFromRaw(String(newValue), els.bet);
+                if (els.betMobile) {
+                    renderBetFromRaw(String(newValue), els.betMobile);
+                }
+                updateRaiseButtonState();
+                
+                // Feedback visual
+                e.target.classList.add('scale-95');
+                setTimeout(() => e.target.classList.remove('scale-95'), 150);
+            }
+        });
 
         // fallback helpers (do not remove)
         function numberWithDots(n) {
