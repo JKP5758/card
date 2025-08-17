@@ -194,7 +194,8 @@
 
         /* CLS Prevention - Reserve space for elements that might be hidden/shown */
         .preset-buttons-container {
-            min-height: 32px; /* Reserve space for preset buttons */
+            min-height: 32px;
+            /* Reserve space for preset buttons */
         }
 
         .mute-icon-container {
@@ -248,8 +249,8 @@
         </header>
 
         <!-- Controls Desktop -->
-        <section class="mt-4 max-sm:hidden grid sm:grid-cols-3 gap-3">
-            <div class="sm:col-span-1 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
+        <section class="mt-4 max-sm:hidden flex w-full sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-1 bg-slate-800/60 rounded-2xl p-4 shadow-glow w-2/5">
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-slate-300">Aksi Taruhan</div>
                     <div class="text-xs text-slate-400">Total Taruhan: <span id="prizePool" class="font-bold text-base text-white">Rp 0</span></div>
@@ -261,46 +262,46 @@
                         class="w-full rounded-xl bg-slate-900 border border-slate-700 p-2 outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="10.000" value="10.000" />
                 </div>
-                                <div class="mt-3 flex gap-2">
-                    <button id="dealBtn" class="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition px-4 py-2 font-semibold">Deal</button>
+                <div class="mt-3 flex gap-2">
+                    <button id="dealBtn" class="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition px-4 py-2 font-semibold">Mulai</button>
                     <button id="raiseBtn" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hidden">Naikkan</button>
                     <button id="resetBtn" class="rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 transition px-4 py-2">Reset</button>
                 </div>
-                
+
                 <!-- Preset buttons - hanya muncul saat dalam ronde -->
                 <div id="presetButtons" class="mt-2 grid grid-cols-4 gap-1 preset-buttons-container opacity-0 pointer-events-none">
-                    <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-5000">-5k</button>
                     <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-10000">-10k</button>
+                    <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-5000">-5k</button>
                     <button class="preset-btn rounded-lg bg-green-600 hover:bg-green-500 active:bg-green-700 transition px-2 py-1 text-xs font-semibold" data-value="5000">+5k</button>
                     <button class="preset-btn rounded-lg bg-green-600 hover:bg-green-500 active:bg-green-700 transition px-2 py-1 text-xs font-semibold" data-value="10000">+10k</button>
                 </div>
-                <p class="text-xs text-slate-400 mt-2">Aturan payout: Menang = +total taruhan, Kalah = -total taruhan, Seri = 0.</p>
+                <p class="text-xs text-slate-400 mt-2">Aturan payout: Menang = Taruhan x2, Kalah = Taruhan Hangus, Seri = Taruhan Dikembalikan</p>
             </div>
 
-            <div class="sm:col-span-2 bg-slate-800/60 rounded-2xl p-4 shadow-glow">
+            <div class="sm:col-span-2 bg-slate-800/60 rounded-2xl p-4 shadow-glow w-3/5">
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-slate-300">Aksi</div>
                 </div>
                 <div class="mt-2 flex gap-3">
-                    <button id="hitBtn" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil</button>
-                    <button id="standBtn" class="rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Sudahi</button>
-                                         <div class="flex items-center gap-2">
-                         <button id="muteBtnMobile" class="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700/60 transition-colors">
-                             <div class="mute-icon-container">
-                                 <!-- Mute Icon -->
-                                 <svg id="muteIconMobile" class="mute-icon w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                     <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.794L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.017-2.794a1 1 0 011.617.794zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                 </svg>
+                    <button id="hitBtn" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil Kartu</button>
+                    <button id="standBtn" class="rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Sudahi Giliran</button>
+                    <div class="flex items-center gap-2">
+                        <button id="muteBtnMobile" class="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700/60 transition-colors">
+                            <div class="mute-icon-container">
+                                <!-- Mute Icon -->
+                                <svg id="muteIconMobile" class="mute-icon w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.794L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.017-2.794a1 1 0 011.617.794zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                </svg>
 
-                                 <!-- Unmute Icon -->
-                                 <svg id="unmuteIconMobile" class="mute-icon w-5 h-5 opacity-0 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
-                                     <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.794L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.017-2.794a1 1 0 011.617.794z" clip-rule="evenodd"></path>
-                                     <path d="M14.5 6.5a1 1 0 011.5 1.32 4 4 0 010 4.36 1 1 0 11-1.5 1.32 6 6 0 000-7.04z"></path>
-                                     <path d="M16.5 4.5a1 1 0 011.5 1.32 8 8 0 010 8.36 1 1 0 11-1.5 1.32 10 10 0 000-11z"></path>
-                                 </svg>
-                             </div>
-                         </button>
-                     </div>
+                                <!-- Unmute Icon -->
+                                <svg id="unmuteIconMobile" class="mute-icon w-5 h-5 opacity-0 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.794L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.017-2.794a1 1 0 011.617.794z" clip-rule="evenodd"></path>
+                                    <path d="M14.5 6.5a1 1 0 011.5 1.32 4 4 0 010 4.36 1 1 0 11-1.5 1.32 6 6 0 000-7.04z"></path>
+                                    <path d="M16.5 4.5a1 1 0 011.5 1.32 8 8 0 010 8.36 1 1 0 11-1.5 1.32 10 10 0 000-11z"></path>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
                 </div>
                 <div class="status-box mt-3 text-slate-300"><span id="status" class="status-text"></span></div>
             </div>
@@ -343,8 +344,8 @@
                     <div class="text-sm text-slate-300">Aksi</div>
                 </div>
                 <div class="mt-2 flex gap-3 flex-row-reverse">
-                    <button id="standBtnMobile" class="rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Sudahi</button>
-                    <button id="hitBtnMobile" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil</button>
+                    <button id="standBtnMobile" class="rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Sudahi Giliran</button>
+                    <button id="hitBtnMobile" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil Kartu</button>
                     <div class="flex items-center gap-2">
                         <button id="muteBtn" class="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700/60 transition-colors">
                             <div class="mute-icon-container">
@@ -381,20 +382,20 @@
                         class="w-full rounded-xl bg-slate-900 border border-slate-700 p-2 outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="10.000" value="10.000" />
                 </div>
-                                <div class="mt-3 flex gap-2">
-                    <button id="dealBtnMobile" class="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition px-4 py-2 font-semibold">Deal</button>
+                <div class="mt-3 flex gap-2">
+                    <button id="dealBtnMobile" class="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition px-4 py-2 font-semibold">Mulai</button>
                     <button id="raiseBtnMobile" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hidden">Naikkan</button>
                     <button id="resetBtnMobile" class="rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 transition px-4 py-2">Reset</button>
                 </div>
-                
+
                 <!-- Preset buttons mobile - hanya muncul saat dalam ronde -->
                 <div id="presetButtonsMobile" class="mt-2 grid grid-cols-4 gap-1 preset-buttons-container opacity-0 pointer-events-none">
-                    <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-5000">-5k</button>
                     <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-10000">-10k</button>
+                    <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-5000">-5k</button>
                     <button class="preset-btn rounded-lg bg-green-600 hover:bg-green-500 active:bg-green-700 transition px-2 py-1 text-xs font-semibold" data-value="5000">+5k</button>
                     <button class="preset-btn rounded-lg bg-green-600 hover:bg-green-500 active:bg-green-700 transition px-2 py-1 text-xs font-semibold" data-value="10000">+10k</button>
                 </div>
-                <p class="text-xs text-slate-400 mt-2">Aturan payout: Menang = +total taruhan, Kalah = -total taruhan, Seri = 0.</p>
+                <p class="text-xs text-slate-400 mt-2">Aturan payout: Menang = Taruhan x2, Kalah = Taruhan Hangus, Seri = Taruhan Dikembalikan</p>
             </div>
         </section>
 
@@ -421,28 +422,32 @@
     </div>
 
     <script>
-        // ====== AUDIO MANAGER ======
+        // ====== AUDIO MANAGER (REVISED) ======
         class AudioManager {
             constructor() {
                 this.sounds = {};
                 this.music = null;
                 this.isMuted = false;
-                this.volume = 0.7;
+                // Volume utama (master) harus antara 0.0 (hening) dan 1.0 (paling keras).
+                // Nilai di atas 1.0 akan dianggap sebagai 1.0 oleh browser.
+                this.volume = 2.0;
+                // Pengali volume untuk tiap suara. Nilai 1.0 adalah volume normal.
+                // Nilai 2.0 akan membuatnya 2x lebih keras dari volume master (dibatasi hingga 1.0).
                 this.individualVolumes = {
                     click: 0.1,
-                    cardFlip: 1.0,
-                    cardToHand: 1.0,
-                    cardBack: 1.0,
+                    cardFlip: 1.5,
+                    cardToHand: 2.0, // Dinaikkan ke batas maksimum (2.0) agar paling keras
+                    cardBack: 0.8,
                     win: 1.0,
-                    lose: 0.5,
+                    lose: 0.2,
                     slede: 1.0,
-                    bg: 0.0
+                    bg: 0.2 // Mengembalikan ke nilai awal agar musik tidak mati
                 };
                 this.initSounds();
             }
 
             initSounds() {
-                // Initialize all sound effects
+                // Inisialisasi semua efek suara
                 this.sounds = {
                     click: new Audio('./assets/audio/click.ogg'),
                     cardFlip: new Audio('./assets/audio/card-flip.ogg'),
@@ -454,90 +459,68 @@
                     bg: new Audio('./assets/audio/bg.ogg')
                 };
 
-                // Set volume for all sounds
+                // Lakukan preload untuk semua suara agar siap dimainkan
                 Object.values(this.sounds).forEach(sound => {
-                    sound.volume = this.volume;
                     sound.preload = 'auto';
                 });
 
-                // Set up background music
+                // Siapkan musik latar
                 this.music = this.sounds.bg;
-                this.music.loop = true;
-                
-                // Apply individual volumes to all sounds
-                this.updateAllVolumes();
-            }
-
-            // Method untuk mengupdate semua volume berdasarkan individual settings
-            updateAllVolumes() {
-                Object.keys(this.sounds).forEach(soundName => {
-                    const sound = this.sounds[soundName];
-                    const individualVolume = this.individualVolumes[soundName] || 1.0;
-                    const finalVolume = this.volume * individualVolume;
-                    sound.volume = Math.min(1.0, finalVolume);
-                });
-                
                 if (this.music) {
-                    const bgVolume = this.individualVolumes.bg || 1.0;
-                    const finalBgVolume = this.volume * 0.3 * bgVolume;
-                    this.music.volume = Math.min(1.0, finalBgVolume);
+                    this.music.loop = true;
+                    this.updateMusicVolume(); // Atur volume awal musik
                 }
             }
 
-                        play(soundName) {
+            // Method khusus untuk update volume musik
+            updateMusicVolume() {
+                if (!this.music) return;
+
+                // FIX: Gunakan nullish coalescing (??) agar nilai 0 tidak di-fallback ke 0.5
+                const bgMultiplier = this.individualVolumes.bg ?? 0.5;
+                // Musik dibuat sedikit lebih pelan (0.3x) dari volume utama
+                const finalBgVolume = this.volume * 0.3 * bgMultiplier;
+                this.music.volume = Math.min(1.0, finalBgVolume);
+            }
+
+            play(soundName) {
                 if (this.isMuted || !this.sounds[soundName]) return;
-                
+
                 try {
-                    // Clone the audio to allow overlapping sounds
+                    // Kloning node audio agar bisa dimainkan tumpang tindih
                     const sound = this.sounds[soundName].cloneNode();
-                    
-                    // Apply individual volume setting
-                    const individualVolume = this.individualVolumes[soundName] || 1.0;
-                    const finalVolume = this.volume * individualVolume;
-                    sound.volume = Math.min(1.0, finalVolume); // Ensure volume doesn't exceed 1.0
-                    
-                    // Debug log
-                    console.log(`Playing ${soundName}: masterVolume=${this.volume}, individualVolume=${individualVolume}, finalVolume=${sound.volume}`);
-                    
-                    // Reset audio to beginning
-                    sound.currentTime = 0;
-                    
-                    // Set event listener to remove the clone after it finishes
-                    sound.addEventListener('ended', () => {
-                        if (sound.parentNode) {
-                            sound.parentNode.removeChild(sound);
-                        }
-                    });
-                    
-                    // Set timeout to remove clone if it doesn't end properly
-                    const timeout = soundName === 'slede' ? 2000 : 5000; // Shorter timeout for slede
-                    setTimeout(() => {
-                        if (sound.parentNode) {
-                            sound.parentNode.removeChild(sound);
-                        }
-                    }, timeout);
-                    
-                    // Play with error handling
+
+                    // Hitung dan terapkan volume HANYA pada klon, tepat sebelum dimainkan
+                    const individualMultiplier = this.individualVolumes[soundName] ?? 1.0;
+                    const finalVolume = this.volume * individualMultiplier;
+                    sound.volume = Math.min(1.0, finalVolume); // Pastikan volume tidak lebih dari 1.0
+
+                    // Log untuk debugging
+                    console.log(`Playing ${soundName}: masterVolume=${this.volume}, individualMultiplier=${individualMultiplier}, finalVolume=${sound.volume}`);
+
+                    sound.currentTime = 0; // Mulai dari awal
+
+                    // Mainkan suara dengan penanganan error
                     const playPromise = sound.play();
                     if (playPromise !== undefined) {
-                        playPromise.catch(e => {
-                            // Ignore autoplay errors
-                            if (e.name !== 'NotAllowedError') {
-                                console.log('Audio play failed:', e);
-                            }
-                            // Remove the clone even if it fails to play
-                            if (sound.parentNode) {
-                                sound.parentNode.removeChild(sound);
+                        playPromise.catch(error => {
+                            // Abaikan error autoplay yang diblokir browser
+                            if (error.name !== 'NotAllowedError') {
+                                console.error(`Audio play failed for ${soundName}:`, error);
                             }
                         });
                     }
                 } catch (e) {
-                    console.log('Audio error:', e);
+                    console.error(`Audio error on playing ${soundName}:`, e);
                 }
             }
 
             playMusic() {
                 if (this.isMuted || !this.music) return;
+                // Cek jika musik sudah berjalan, jangan lakukan apa-apa
+                if (this.music.currentTime > 0 && !this.music.paused) {
+                    return;
+                }
                 this.music.play().catch(e => console.log('Music play failed:', e));
             }
 
@@ -551,68 +534,55 @@
             toggleMute() {
                 this.isMuted = !this.isMuted;
                 if (this.isMuted) {
-                    this.stopMusic();
+                    this.music.pause(); // Cukup pause, jangan reset
                 } else {
                     this.playMusic();
                 }
                 return this.isMuted;
             }
 
-            setVolume(volume) {
-                this.volume = Math.max(0, Math.min(1, volume));
-                
-                // Update individual sound volumes
-                Object.keys(this.sounds).forEach(soundName => {
-                    const sound = this.sounds[soundName];
-                    const individualVolume = this.individualVolumes[soundName] || 1.0;
-                    const finalVolume = this.volume * individualVolume;
-                    sound.volume = Math.min(1.0, finalVolume);
-                });
-                
-                if (this.music) {
-                    const bgVolume = this.individualVolumes.bg || 1.0;
-                    const finalBgVolume = this.volume * 0.3 * bgVolume;
-                    this.music.volume = Math.min(1.0, finalBgVolume);
-                }
+            // Setter untuk volume utama (master)
+            setVolume(newVolume) {
+                this.volume = Math.max(0, Math.min(1, newVolume));
+                // Saat volume utama diubah, hanya perlu update suara yang berjalan terus-menerus (musik)
+                this.updateMusicVolume();
             }
 
-            // Method untuk mengatur volume individual sound
-            setIndividualVolume(soundName, volume) {
+            // Setter untuk volume individual
+            setIndividualVolume(soundName, newVolume) {
                 if (this.individualVolumes.hasOwnProperty(soundName)) {
-                    this.individualVolumes[soundName] = Math.max(0, Math.min(2.0, volume));
-                    console.log(`Volume ${soundName} set to: ${this.individualVolumes[soundName]}`);
-                    
-                    // Update all volumes to apply the new individual setting
-                    this.updateAllVolumes();
+                    // Bolehkan pengali > 1 untuk membuat suara lebih keras
+                    this.individualVolumes[soundName] = Math.max(0, Math.min(2.0, newVolume));
+                    console.log(`Volume multiplier for ${soundName} set to: ${this.individualVolumes[soundName]}`);
+
+                    // Jika yang diubah adalah musik, update volumenya langsung
+                    if (soundName === 'bg') {
+                        this.updateMusicVolume();
+                    }
                 }
             }
 
-            // Method untuk mendapatkan volume individual sound
             getIndividualVolume(soundName) {
                 return this.individualVolumes[soundName] || 1.0;
             }
 
-            // Method untuk mendapatkan semua volume settings
             getAllVolumeSettings() {
-                return { ...this.individualVolumes };
+                return {
+                    ...this.individualVolumes
+                };
             }
         }
 
-                // Initialize audio manager
+
+        // Initialize audio manager
         const audioManager = new AudioManager();
-        
+
         // Function to stop all audio clones
         function stopAllAudioClones() {
-            const audioClones = document.querySelectorAll('audio');
-            audioClones.forEach(audio => {
-                if (audio !== audioManager.music) {
-                    audio.pause();
-                    audio.currentTime = 0;
-                    if (audio.parentNode) {
-                        audio.parentNode.removeChild(audio);
-                    }
-                }
-            });
+            // FIX: Fungsi ini seharusnya tidak menghentikan musik latar.
+            // Dibiarkan kosong karena klon efek suara tidak ditambahkan ke DOM dan akan
+            // di-garbage collect secara otomatis. Menghapus isinya akan mencegah
+            // musik latar dimulai ulang setiap ronde.
         }
 
         // ====== DEVELOPER AUDIO CONTROLS ======
@@ -622,17 +592,17 @@
             setSoundVolume: (soundName, volume) => {
                 audioManager.setIndividualVolume(soundName, volume);
             },
-            
+
             // Get volume untuk sound tertentu
             getSoundVolume: (soundName) => {
                 return audioManager.getIndividualVolume(soundName);
             },
-            
+
             // Get semua volume settings
             getAllVolumes: () => {
                 return audioManager.getAllVolumeSettings();
             },
-            
+
             // Set volume untuk semua sound sekaligus
             setAllVolumes: (volume) => {
                 const sounds = ['click', 'cardFlip', 'cardToHand', 'cardBack', 'win', 'lose', 'slede', 'bg'];
@@ -640,12 +610,12 @@
                     audioManager.setIndividualVolume(sound, volume);
                 });
             },
-            
+
             // Reset semua volume ke default (1.0)
             resetAllVolumes: () => {
                 audioManager.setAllVolumes(1.0);
             },
-            
+
             // Play test sound
             testSound: (soundName) => {
                 audioManager.play(soundName);
@@ -661,7 +631,7 @@
         console.log('- audioControls.resetAllVolumes()');
         console.log('- audioControls.testSound("click")');
         console.log('Available sounds: click, cardFlip, cardToHand, cardBack, win, lose, slede, bg');
-        
+
         // Test individual volume settings
         console.log('🔊 Current volume settings:', audioManager.getAllVolumeSettings());
 
@@ -1515,13 +1485,13 @@
         // Audio event listeners
         els.muteBtn.addEventListener('click', () => {
             const isMuted = audioManager.toggleMute();
-            
+
             // Toggle opacity untuk desktop
             els.muteIcon.style.opacity = isMuted ? '0' : '1';
             els.muteIcon.style.pointerEvents = isMuted ? 'none' : 'auto';
             els.unmuteIcon.style.opacity = isMuted ? '1' : '0';
             els.unmuteIcon.style.pointerEvents = isMuted ? 'auto' : 'none';
-            
+
             // Sync dengan mobile
             if (els.muteIconMobile) {
                 els.muteIconMobile.style.opacity = isMuted ? '0' : '1';
@@ -1531,7 +1501,7 @@
                 els.unmuteIconMobile.style.opacity = isMuted ? '1' : '0';
                 els.unmuteIconMobile.style.pointerEvents = isMuted ? 'auto' : 'none';
             }
-            
+
             audioManager.play('click');
         });
 
@@ -1539,19 +1509,19 @@
         if (els.muteBtnMobile) {
             els.muteBtnMobile.addEventListener('click', () => {
                 const isMuted = audioManager.toggleMute();
-                
+
                 // Toggle opacity untuk mobile
                 els.muteIconMobile.style.opacity = isMuted ? '0' : '1';
                 els.muteIconMobile.style.pointerEvents = isMuted ? 'none' : 'auto';
                 els.unmuteIconMobile.style.opacity = isMuted ? '1' : '0';
                 els.unmuteIconMobile.style.pointerEvents = isMuted ? 'auto' : 'none';
-                
+
                 // Sync dengan desktop
                 els.muteIcon.style.opacity = isMuted ? '0' : '1';
                 els.muteIcon.style.pointerEvents = isMuted ? 'none' : 'auto';
                 els.unmuteIcon.style.opacity = isMuted ? '1' : '0';
                 els.unmuteIcon.style.pointerEvents = isMuted ? 'auto' : 'none';
-                
+
                 audioManager.play('click');
             });
         }
@@ -1567,7 +1537,7 @@
             setControls({
                 inRound: false
             });
-            
+
             // Start background music
             audioManager.playMusic();
         });
@@ -1662,4 +1632,4 @@
     </script>
 </body>
 
-</html>
+</ht
