@@ -128,6 +128,8 @@
             width: calc(var(--card-w));
             height: calc(var(--card-h));
             pointer-events: none;
+            z-index: 3000;
+            /* Deck berada di atas animasi kartu */
         }
 
         .deck-stack {
@@ -182,11 +184,53 @@
         /* toast tweaks */
         #toast {
             min-width: 180px;
+            z-index: 9000;
         }
 
         /* preset button animation */
         .scale-95 {
             transform: scale(0.95);
+        }
+
+        /* CLS Prevention - Reserve space for elements that might be hidden/shown */
+        .preset-buttons-container {
+            min-height: 32px; /* Reserve space for preset buttons */
+        }
+
+        .mute-icon-container {
+            width: 20px;
+            height: 20px;
+            position: relative;
+        }
+
+        .mute-icon {
+            position: absolute;
+            inset: 0;
+            opacity: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        .mute-icon.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Status box to avoid CLS: reserve height and animate opacity only */
+        .status-box {
+            min-height: 1.25rem;
+            display: block;
+        }
+
+        .status-text {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(-4px);
+            transition: opacity .18s ease, transform .18s ease;
+        }
+
+        .status-text.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
     </style>
 </head>
@@ -195,9 +239,11 @@
     <div class="max-w-5xl mx-auto p-4 sm:p-6">
         <header class="flex items-center max-sm:flex-col justify-between gap-4">
             <h1 class="text-xl sm:text-2xl font-bold">Mini Blackjack 21 <span class="text-slate-400 text-base">(beta test)</span></h1>
-            <div class="text-right max-sm:w-full">
-                <div class="text-sm text-slate-400">Saldo</div>
-                <div id="balance" class="text-2xl font-bold">Rp 100.000</div>
+            <div class="flex items-center flex-row-reverse gap-4 max-sm:w-full max-sm:justify-between">
+                <div class="text-right">
+                    <div class="text-sm text-slate-400">Saldo</div>
+                    <div id="balance" class="text-2xl font-bold">Rp 100.000</div>
+                </div>
             </div>
         </header>
 
@@ -215,14 +261,14 @@
                         class="w-full rounded-xl bg-slate-900 border border-slate-700 p-2 outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="10.000" value="10.000" />
                 </div>
-                <div class="mt-3 flex gap-2">
+                                <div class="mt-3 flex gap-2">
                     <button id="dealBtn" class="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition px-4 py-2 font-semibold">Deal</button>
                     <button id="raiseBtn" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hidden">Naikkan</button>
                     <button id="resetBtn" class="rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 transition px-4 py-2">Reset</button>
                 </div>
                 
                 <!-- Preset buttons - hanya muncul saat dalam ronde -->
-                <div id="presetButtons" class="mt-2 grid grid-cols-4 gap-1 hidden">
+                <div id="presetButtons" class="mt-2 grid grid-cols-4 gap-1 preset-buttons-container opacity-0 pointer-events-none">
                     <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-5000">-5k</button>
                     <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-10000">-10k</button>
                     <button class="preset-btn rounded-lg bg-green-600 hover:bg-green-500 active:bg-green-700 transition px-2 py-1 text-xs font-semibold" data-value="5000">+5k</button>
@@ -238,6 +284,23 @@
                 <div class="mt-2 flex gap-3">
                     <button id="hitBtn" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil</button>
                     <button id="standBtn" class="rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Sudahi</button>
+                                         <div class="flex items-center gap-2">
+                         <button id="muteBtnMobile" class="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700/60 transition-colors">
+                             <div class="mute-icon-container">
+                                 <!-- Mute Icon -->
+                                 <svg id="muteIconMobile" class="mute-icon w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                     <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.794L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.017-2.794a1 1 0 011.617.794zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                 </svg>
+
+                                 <!-- Unmute Icon -->
+                                 <svg id="unmuteIconMobile" class="mute-icon w-5 h-5 opacity-0 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                                     <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.794L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.017-2.794a1 1 0 011.617.794z" clip-rule="evenodd"></path>
+                                     <path d="M14.5 6.5a1 1 0 011.5 1.32 4 4 0 010 4.36 1 1 0 11-1.5 1.32 6 6 0 000-7.04z"></path>
+                                     <path d="M16.5 4.5a1 1 0 011.5 1.32 8 8 0 010 8.36 1 1 0 11-1.5 1.32 10 10 0 000-11z"></path>
+                                 </svg>
+                             </div>
+                         </button>
+                     </div>
                 </div>
                 <div class="status-box mt-3 text-slate-300"><span id="status" class="status-text"></span></div>
             </div>
@@ -282,6 +345,23 @@
                 <div class="mt-2 flex gap-3 flex-row-reverse">
                     <button id="standBtnMobile" class="rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Sudahi</button>
                     <button id="hitBtnMobile" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil</button>
+                    <div class="flex items-center gap-2">
+                        <button id="muteBtn" class="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700/60 transition-colors">
+                            <div class="mute-icon-container">
+                                <!-- Mute Icon -->
+                                <svg id="muteIcon" class="mute-icon w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.794L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.017-2.794a1 1 0 011.617.794zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                </svg>
+
+                                <!-- Unmute Icon -->
+                                <svg id="unmuteIcon" class="mute-icon w-5 h-5 opacity-0 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.794L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.017-2.794a1 1 0 011.617.794z" clip-rule="evenodd"></path>
+                                    <path d="M14.5 6.5a1 1 0 011.5 1.32 4 4 0 010 4.36 1 1 0 11-1.5 1.32 6 6 0 000-7.04z"></path>
+                                    <path d="M16.5 4.5a1 1 0 011.5 1.32 8 8 0 010 8.36 1 1 0 11-1.5 1.32 10 10 0 000-11z"></path>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
                 </div>
                 <div class="status-box mt-3 text-slate-300"><span id="statusMobile" class="status-text"></span></div>
             </div>
@@ -301,14 +381,14 @@
                         class="w-full rounded-xl bg-slate-900 border border-slate-700 p-2 outline-none focus:ring-2 focus:ring-indigo-500"
                         placeholder="10.000" value="10.000" />
                 </div>
-                <div class="mt-3 flex gap-2">
+                                <div class="mt-3 flex gap-2">
                     <button id="dealBtnMobile" class="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition px-4 py-2 font-semibold">Deal</button>
                     <button id="raiseBtnMobile" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hidden">Naikkan</button>
                     <button id="resetBtnMobile" class="rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 transition px-4 py-2">Reset</button>
                 </div>
                 
                 <!-- Preset buttons mobile - hanya muncul saat dalam ronde -->
-                <div id="presetButtonsMobile" class="mt-2 grid grid-cols-4 gap-1 hidden">
+                <div id="presetButtonsMobile" class="mt-2 grid grid-cols-4 gap-1 preset-buttons-container opacity-0 pointer-events-none">
                     <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-5000">-5k</button>
                     <button class="preset-btn rounded-lg bg-red-600 hover:bg-red-500 active:bg-red-700 transition px-2 py-1 text-xs font-semibold" data-value="-10000">-10k</button>
                     <button class="preset-btn rounded-lg bg-green-600 hover:bg-green-500 active:bg-green-700 transition px-2 py-1 text-xs font-semibold" data-value="5000">+5k</button>
@@ -341,6 +421,250 @@
     </div>
 
     <script>
+        // ====== AUDIO MANAGER ======
+        class AudioManager {
+            constructor() {
+                this.sounds = {};
+                this.music = null;
+                this.isMuted = false;
+                this.volume = 0.7;
+                this.individualVolumes = {
+                    click: 0.1,
+                    cardFlip: 1.0,
+                    cardToHand: 1.0,
+                    cardBack: 1.0,
+                    win: 1.0,
+                    lose: 0.5,
+                    slede: 1.0,
+                    bg: 0.0
+                };
+                this.initSounds();
+            }
+
+            initSounds() {
+                // Initialize all sound effects
+                this.sounds = {
+                    click: new Audio('./assets/audio/click.ogg'),
+                    cardFlip: new Audio('./assets/audio/card-flip.ogg'),
+                    cardToHand: new Audio('./assets/audio/card-to-hand.ogg'),
+                    cardBack: new Audio('./assets/audio/card-back.ogg'),
+                    win: new Audio('./assets/audio/win.ogg'),
+                    lose: new Audio('./assets/audio/lose.ogg'),
+                    slede: new Audio('./assets/audio/slede.ogg'),
+                    bg: new Audio('./assets/audio/bg.ogg')
+                };
+
+                // Set volume for all sounds
+                Object.values(this.sounds).forEach(sound => {
+                    sound.volume = this.volume;
+                    sound.preload = 'auto';
+                });
+
+                // Set up background music
+                this.music = this.sounds.bg;
+                this.music.loop = true;
+                
+                // Apply individual volumes to all sounds
+                this.updateAllVolumes();
+            }
+
+            // Method untuk mengupdate semua volume berdasarkan individual settings
+            updateAllVolumes() {
+                Object.keys(this.sounds).forEach(soundName => {
+                    const sound = this.sounds[soundName];
+                    const individualVolume = this.individualVolumes[soundName] || 1.0;
+                    const finalVolume = this.volume * individualVolume;
+                    sound.volume = Math.min(1.0, finalVolume);
+                });
+                
+                if (this.music) {
+                    const bgVolume = this.individualVolumes.bg || 1.0;
+                    const finalBgVolume = this.volume * 0.3 * bgVolume;
+                    this.music.volume = Math.min(1.0, finalBgVolume);
+                }
+            }
+
+                        play(soundName) {
+                if (this.isMuted || !this.sounds[soundName]) return;
+                
+                try {
+                    // Clone the audio to allow overlapping sounds
+                    const sound = this.sounds[soundName].cloneNode();
+                    
+                    // Apply individual volume setting
+                    const individualVolume = this.individualVolumes[soundName] || 1.0;
+                    const finalVolume = this.volume * individualVolume;
+                    sound.volume = Math.min(1.0, finalVolume); // Ensure volume doesn't exceed 1.0
+                    
+                    // Debug log
+                    console.log(`Playing ${soundName}: masterVolume=${this.volume}, individualVolume=${individualVolume}, finalVolume=${sound.volume}`);
+                    
+                    // Reset audio to beginning
+                    sound.currentTime = 0;
+                    
+                    // Set event listener to remove the clone after it finishes
+                    sound.addEventListener('ended', () => {
+                        if (sound.parentNode) {
+                            sound.parentNode.removeChild(sound);
+                        }
+                    });
+                    
+                    // Set timeout to remove clone if it doesn't end properly
+                    const timeout = soundName === 'slede' ? 2000 : 5000; // Shorter timeout for slede
+                    setTimeout(() => {
+                        if (sound.parentNode) {
+                            sound.parentNode.removeChild(sound);
+                        }
+                    }, timeout);
+                    
+                    // Play with error handling
+                    const playPromise = sound.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => {
+                            // Ignore autoplay errors
+                            if (e.name !== 'NotAllowedError') {
+                                console.log('Audio play failed:', e);
+                            }
+                            // Remove the clone even if it fails to play
+                            if (sound.parentNode) {
+                                sound.parentNode.removeChild(sound);
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.log('Audio error:', e);
+                }
+            }
+
+            playMusic() {
+                if (this.isMuted || !this.music) return;
+                this.music.play().catch(e => console.log('Music play failed:', e));
+            }
+
+            stopMusic() {
+                if (this.music) {
+                    this.music.pause();
+                    this.music.currentTime = 0;
+                }
+            }
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                if (this.isMuted) {
+                    this.stopMusic();
+                } else {
+                    this.playMusic();
+                }
+                return this.isMuted;
+            }
+
+            setVolume(volume) {
+                this.volume = Math.max(0, Math.min(1, volume));
+                
+                // Update individual sound volumes
+                Object.keys(this.sounds).forEach(soundName => {
+                    const sound = this.sounds[soundName];
+                    const individualVolume = this.individualVolumes[soundName] || 1.0;
+                    const finalVolume = this.volume * individualVolume;
+                    sound.volume = Math.min(1.0, finalVolume);
+                });
+                
+                if (this.music) {
+                    const bgVolume = this.individualVolumes.bg || 1.0;
+                    const finalBgVolume = this.volume * 0.3 * bgVolume;
+                    this.music.volume = Math.min(1.0, finalBgVolume);
+                }
+            }
+
+            // Method untuk mengatur volume individual sound
+            setIndividualVolume(soundName, volume) {
+                if (this.individualVolumes.hasOwnProperty(soundName)) {
+                    this.individualVolumes[soundName] = Math.max(0, Math.min(2.0, volume));
+                    console.log(`Volume ${soundName} set to: ${this.individualVolumes[soundName]}`);
+                    
+                    // Update all volumes to apply the new individual setting
+                    this.updateAllVolumes();
+                }
+            }
+
+            // Method untuk mendapatkan volume individual sound
+            getIndividualVolume(soundName) {
+                return this.individualVolumes[soundName] || 1.0;
+            }
+
+            // Method untuk mendapatkan semua volume settings
+            getAllVolumeSettings() {
+                return { ...this.individualVolumes };
+            }
+        }
+
+                // Initialize audio manager
+        const audioManager = new AudioManager();
+        
+        // Function to stop all audio clones
+        function stopAllAudioClones() {
+            const audioClones = document.querySelectorAll('audio');
+            audioClones.forEach(audio => {
+                if (audio !== audioManager.music) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    if (audio.parentNode) {
+                        audio.parentNode.removeChild(audio);
+                    }
+                }
+            });
+        }
+
+        // ====== DEVELOPER AUDIO CONTROLS ======
+        // Script untuk developer mengatur volume individual sound
+        window.audioControls = {
+            // Set volume untuk sound tertentu (0.0 - 2.0)
+            setSoundVolume: (soundName, volume) => {
+                audioManager.setIndividualVolume(soundName, volume);
+            },
+            
+            // Get volume untuk sound tertentu
+            getSoundVolume: (soundName) => {
+                return audioManager.getIndividualVolume(soundName);
+            },
+            
+            // Get semua volume settings
+            getAllVolumes: () => {
+                return audioManager.getAllVolumeSettings();
+            },
+            
+            // Set volume untuk semua sound sekaligus
+            setAllVolumes: (volume) => {
+                const sounds = ['click', 'cardFlip', 'cardToHand', 'cardBack', 'win', 'lose', 'slede', 'bg'];
+                sounds.forEach(sound => {
+                    audioManager.setIndividualVolume(sound, volume);
+                });
+            },
+            
+            // Reset semua volume ke default (1.0)
+            resetAllVolumes: () => {
+                audioManager.setAllVolumes(1.0);
+            },
+            
+            // Play test sound
+            testSound: (soundName) => {
+                audioManager.play(soundName);
+            }
+        };
+
+        // Console log untuk developer
+        console.log('🎵 Audio Controls Available:');
+        console.log('- audioControls.setSoundVolume("click", 1.5)');
+        console.log('- audioControls.getSoundVolume("click")');
+        console.log('- audioControls.getAllVolumes()');
+        console.log('- audioControls.setAllVolumes(1.2)');
+        console.log('- audioControls.resetAllVolumes()');
+        console.log('- audioControls.testSound("click")');
+        console.log('Available sounds: click, cardFlip, cardToHand, cardBack, win, lose, slede, bg');
+        
+        // Test individual volume settings
+        console.log('🔊 Current volume settings:', audioManager.getAllVolumeSettings());
+
         // ====== GAME STATE ======
         const ASSET_PATH = './assets/img'; // Ubah path agar gambar bisa dimuat
         const SUITS = ['H', 'W', 'K', 'S'];
@@ -363,9 +687,9 @@
         // - limit_rigged: >= this value => mustahil menang (bandar selalu menang)
         // - riggedChance: peluang (0..1) pada rentang [limit_fair, limit_rigged) dimana kemenangan pemain diubah jadi kalah
         const RIG_CONFIG = {
-            limit_fair: 750000,   // < 200k => fair
+            limit_fair: 750000, // < 200k => fair
             limit_rigged: 1000000, // >= 300k => mustahil menang
-            riggedChance: 0.2     // 20% chance curang pada 200k - 300k
+            riggedChance: 0.2 // 20% chance curang pada 200k - 300k
         };
 
         // Flag untuk menandai apakah rigging sedang aktif
@@ -408,11 +732,11 @@
         // Fungsi untuk mendapatkan kartu yang tepat untuk rigging
         function getRiggedCard(targetTotal, currentTotal) {
             const neededValue = targetTotal - currentTotal;
-            
+
             // Cari kartu yang ada di deck dengan nilai yang tepat
             let perfectCard = null;
             let perfectCardIndex = -1;
-            
+
             // Cari kartu dengan nilai yang tepat
             for (let i = 0; i < deck.length; i++) {
                 const card = deck[i];
@@ -423,7 +747,7 @@
                     break;
                 }
             }
-            
+
             // Jika tidak ada kartu dengan nilai tepat, cari kartu yang aman
             if (!perfectCard) {
                 for (let i = 0; i < deck.length; i++) {
@@ -436,18 +760,18 @@
                     }
                 }
             }
-            
+
             // Jika masih tidak ada, ambil kartu pertama dari deck
             if (!perfectCard) {
                 perfectCard = deck[0];
                 perfectCardIndex = 0;
             }
-            
+
             // Hapus kartu dari deck
             if (perfectCardIndex > -1) {
                 deck.splice(perfectCardIndex, 1);
             }
-            
+
             return perfectCard;
         }
 
@@ -483,6 +807,14 @@
             resetBtnMobile: document.getElementById('resetBtnMobile'),
             presetButtonsMobile: document.getElementById('presetButtonsMobile'),
             prizePoolMobile: document.getElementById('prizePoolMobile'),
+            // Audio controls
+            muteBtn: document.getElementById('muteBtn'),
+            muteIcon: document.getElementById('muteIcon'),
+            unmuteIcon: document.getElementById('unmuteIcon'),
+            // Audio controls mobile
+            muteBtnMobile: document.getElementById('muteBtnMobile'),
+            muteIconMobile: document.getElementById('muteIconMobile'),
+            unmuteIconMobile: document.getElementById('unmuteIconMobile')
         };
 
         els.year.textContent = new Date().getFullYear();
@@ -695,9 +1027,18 @@
             cols.raise.forEach(b => b.classList.toggle('hidden', !inRound));
             cols.reset.forEach(b => b.disabled = false);
 
-            // Tampilkan/sembunyikan preset buttons
-            els.presetButtons.classList.toggle('hidden', !inRound);
-            els.presetButtonsMobile.classList.toggle('hidden', !inRound);
+            // Tampilkan/sembunyikan preset buttons dengan opacity
+            [els.presetButtons, els.presetButtonsMobile].forEach(container => {
+                if (container) {
+                    if (inRound) {
+                        container.style.opacity = '1';
+                        container.style.pointerEvents = 'auto';
+                    } else {
+                        container.style.opacity = '0';
+                        container.style.pointerEvents = 'none';
+                    }
+                }
+            });
 
             // Panggil fungsi untuk memperbarui status tombol "Naikkan"
             updateRaiseButtonState();
@@ -744,6 +1085,9 @@
             const endLeft = targetC.x - cardRect.width / 2;
             const endTop = targetC.y - cardRect.height / 2;
 
+            // Play card dealing sound tepat saat animasi dimulai
+            audioManager.play('cardToHand');
+
             await gsap.to(cardEl, {
                 duration: .45,
                 left: endLeft,
@@ -762,11 +1106,14 @@
 
             if (!faceDown) {
                 const inner = cardEl.querySelector('.card-inner');
+                // Play card flip sound tepat saat kartu mulai dibalik
+                audioManager.play('cardFlip');
                 requestAnimationFrame(() => inner.classList.add('[transform:rotateY(180deg)]'));
-                await new Promise(r => setTimeout(r, 480));
+                await new Promise(r => setTimeout(r, 300)); // Percepat animasi dari 480ms ke 300ms
                 cardEl.classList.add('glow');
                 setTimeout(() => cardEl.classList.remove('glow'), 600);
             }
+            // Kartu tersembunyi tidak perlu suara card-flip
             return cardEl;
         }
 
@@ -774,18 +1121,51 @@
             const allCards = Array.from(document.querySelectorAll('#playerHand .card, #botHand .card'));
             if (allCards.length === 0) return;
 
-            const firstCard = document.querySelector('#botHand .card') || document.querySelector('#playerHand .card');
-            const firstRect = firstCard.getBoundingClientRect();
-            const collectX = firstRect.left + firstRect.width / 2 + window.scrollX;
-            const collectY = firstRect.top + firstRect.height / 2 + window.scrollY;
+            // Ambil semua kartu yang ada (tidak hanya 2 kartu pertama)
+            const botCards = Array.from(document.querySelectorAll('#botHand .card'));
+            const playerCards = Array.from(document.querySelectorAll('#playerHand .card'));
 
-            allCards.forEach(c => {
-                const inner = c.querySelector('.card-inner');
-                if (inner) inner.classList.remove('[transform:rotateY(180deg)]');
-            });
-            await new Promise(r => setTimeout(r, 360));
+            console.log('Bot cards:', botCards.length, 'Player cards:', playerCards.length);
 
-            allCards.forEach((c, i) => {
+            // Susun kartu sesuai urutan: kartu terakhir bot - kartu pertama bot - kartu terakhir user - kartu pertama user
+            const orderedCards = [];
+
+            // Tambahkan semua kartu bot (dari terakhir ke pertama)
+            for (let i = botCards.length - 1; i >= 0; i--) {
+                if (botCards[i]) {
+                    orderedCards.push(botCards[i]);
+                }
+            }
+
+            // Tambahkan semua kartu player (dari terakhir ke pertama)
+            for (let i = playerCards.length - 1; i >= 0; i--) {
+                if (playerCards[i]) {
+                    orderedCards.push(playerCards[i]);
+                }
+            }
+
+            console.log('Total cards to animate:', orderedCards.length);
+
+            // Pastikan ada kartu untuk dianimasikan
+            if (orderedCards.length === 0) return;
+
+            // Balik semua kartu terlebih dahulu dengan suara card-flip
+            for (let i = 0; i < orderedCards.length; i++) {
+                const card = orderedCards[i];
+                const inner = card.querySelector('.card-inner');
+                if (inner) {
+                    // Selalu balik kartu ke posisi tertutup (card back)
+                    inner.classList.remove('[transform:rotateY(180deg)]');
+                    audioManager.play('cardFlip');
+                    await new Promise(r => setTimeout(r, 150));
+                }
+            }
+
+            // Tunggu sebentar setelah semua kartu dibalik
+            await new Promise(r => setTimeout(r, 200));
+
+            // Pindahkan semua kartu ke body untuk animasi
+            orderedCards.forEach((c, i) => {
                 const r = c.getBoundingClientRect();
                 document.body.appendChild(c);
                 c.style.position = 'absolute';
@@ -794,32 +1174,40 @@
                 c.style.zIndex = 2000 + i;
             });
 
-            const cardW = allCards[0].getBoundingClientRect().width;
-            const cardH = allCards[0].getBoundingClientRect().height;
-            await gsap.to(allCards, {
-                duration: 0.45,
-                left: (i) => (collectX - cardW / 2 + (i % 6) * 2),
-                top: (i) => (collectY - cardH / 2 + Math.floor(i / 6) * 2),
-                rotation: () => (Math.random() * 20 - 10),
-                scale: 0.92,
-                stagger: 0.05,
-                ease: 'power2.out'
-            });
-
-            await new Promise(r => setTimeout(r, 180));
-
+            const cardW = orderedCards[0].getBoundingClientRect().width;
+            const cardH = orderedCards[0].getBoundingClientRect().height;
             const deckC = centerOf(els.deckSpot);
-            await gsap.to(allCards, {
-                duration: 0.5,
-                left: deckC.x - cardW / 2,
-                top: deckC.y - cardH / 2,
-                rotation: 20,
-                scale: 0.6,
-                stagger: 0.03,
-                ease: 'power2.in'
-            });
 
-            allCards.forEach(c => c.remove());
+            // Animasi kartu bergerak ke deck secara berurutan (tidak menunggu kartu sebelumnya selesai)
+            for (let i = 0; i < orderedCards.length; i++) {
+                const card = orderedCards[i];
+
+                // Play slede sound untuk setiap kartu yang bergerak
+                audioManager.play('slede');
+
+                // Animasi kartu ke deck tanpa await (tidak menunggu selesai)
+                gsap.to(card, {
+                    duration: 0.3,
+                    left: deckC.x - cardW / 2,
+                    top: deckC.y - cardH / 2,
+                    rotation: 20,
+                    scale: 0.6,
+                    ease: 'power2.in'
+                });
+
+                // Delay singkat antar kartu (tidak menunggu animasi selesai)
+                await new Promise(r => setTimeout(r, 80));
+            }
+
+            // Tunggu sebentar sebelum menghapus kartu
+            await new Promise(r => setTimeout(r, 200));
+
+            // Hapus semua kartu
+            orderedCards.forEach(c => {
+                if (c && c.parentNode) {
+                    c.remove();
+                }
+            });
         }
 
         function drawFromDeck() {
@@ -833,6 +1221,9 @@
         async function startRound() {
             if (isProcessingAction) return;
             isProcessingAction = true;
+
+            // Stop all audio clones before starting new round
+            stopAllAudioClones();
 
             let initialBet = Math.max(1000, getBetNumeric(els.bet));
             if (initialBet > balance) {
@@ -895,7 +1286,7 @@
             const b2 = drawFromDeck();
             botHand.push(b2);
             botHiddenCardEl = await dealCardAnimated(els.botHand, {
-                img: `https://jkp.my.id/assets/img/card-back.svg`,
+                img: `./assets/img/card-bg.jpg`,
                 suit: '',
                 rank: ''
             }, {
@@ -954,8 +1345,10 @@
             img.src = hiddenCard.img;
             img.alt = `${hiddenCard.suit}${hiddenCard.rank}`;
 
+            // Play card flip sound saat kartu tersembunyi bot dibalik
+            audioManager.play('cardFlip');
             requestAnimationFrame(() => inner.classList.add('[transform:rotateY(180deg)]'));
-            await new Promise(r => setTimeout(r, 480));
+            await new Promise(r => setTimeout(r, 300)); // Percepat animasi dari 480ms ke 300ms
             els.botTotal.textContent = handTotal(botHand);
 
             setStatus("Giliran bandar...");
@@ -970,7 +1363,7 @@
                 // Rigging aktif - bot akan mendapatkan kartu yang tepat
                 const botCurrentTotal = handTotal(botHand);
                 let targetTotal;
-                
+
                 // Tentukan target total bot
                 if (playerTotal <= 21) {
                     // Jika pemain 20, bot bisa dapat 21 atau 20
@@ -999,7 +1392,7 @@
                     } else {
                         card = drawFromDeck();
                     }
-                    
+
                     botHand.push(card);
                     await dealCardAnimated(els.botHand, card, {
                         faceDown: false
@@ -1058,8 +1451,10 @@
             if (result === 'win') {
                 balance += totalBet * 2;
                 showToast(`Menang! + ${fmtRupiah(totalBet)}`, 'win');
+                audioManager.play('win');
             } else if (result === 'lose') {
                 showToast(`Kalah! - ${fmtRupiah(totalBet)}`, 'lose');
+                audioManager.play('lose');
             } else { // Seri
                 balance += totalBet; // Kembalikan taruhan awal
                 showToast("Seri.", 'info');
@@ -1117,6 +1512,50 @@
             showToast("Game di-reset!", "info");
         }
 
+        // Audio event listeners
+        els.muteBtn.addEventListener('click', () => {
+            const isMuted = audioManager.toggleMute();
+            
+            // Toggle opacity untuk desktop
+            els.muteIcon.style.opacity = isMuted ? '0' : '1';
+            els.muteIcon.style.pointerEvents = isMuted ? 'none' : 'auto';
+            els.unmuteIcon.style.opacity = isMuted ? '1' : '0';
+            els.unmuteIcon.style.pointerEvents = isMuted ? 'auto' : 'none';
+            
+            // Sync dengan mobile
+            if (els.muteIconMobile) {
+                els.muteIconMobile.style.opacity = isMuted ? '0' : '1';
+                els.muteIconMobile.style.pointerEvents = isMuted ? 'none' : 'auto';
+            }
+            if (els.unmuteIconMobile) {
+                els.unmuteIconMobile.style.opacity = isMuted ? '1' : '0';
+                els.unmuteIconMobile.style.pointerEvents = isMuted ? 'auto' : 'none';
+            }
+            
+            audioManager.play('click');
+        });
+
+        // Audio event listeners mobile
+        if (els.muteBtnMobile) {
+            els.muteBtnMobile.addEventListener('click', () => {
+                const isMuted = audioManager.toggleMute();
+                
+                // Toggle opacity untuk mobile
+                els.muteIconMobile.style.opacity = isMuted ? '0' : '1';
+                els.muteIconMobile.style.pointerEvents = isMuted ? 'none' : 'auto';
+                els.unmuteIconMobile.style.opacity = isMuted ? '1' : '0';
+                els.unmuteIconMobile.style.pointerEvents = isMuted ? 'auto' : 'none';
+                
+                // Sync dengan desktop
+                els.muteIcon.style.opacity = isMuted ? '0' : '1';
+                els.muteIcon.style.pointerEvents = isMuted ? 'none' : 'auto';
+                els.unmuteIcon.style.opacity = isMuted ? '1' : '0';
+                els.unmuteIcon.style.pointerEvents = isMuted ? 'auto' : 'none';
+                
+                audioManager.play('click');
+            });
+        }
+
         // Global event listeners
         window.addEventListener('load', () => {
             renderBetFromRaw('10000', els.bet);
@@ -1128,33 +1567,61 @@
             setControls({
                 inRound: false
             });
+            
+            // Start background music
+            audioManager.playMusic();
         });
 
         // Event listener untuk Deal
-        els.dealBtn.addEventListener('click', startRound);
+        els.dealBtn.addEventListener('click', () => {
+            audioManager.play('click');
+            startRound();
+        });
         if (els.dealBtnMobile) {
-            els.dealBtnMobile.addEventListener('click', startRound);
+            els.dealBtnMobile.addEventListener('click', () => {
+                audioManager.play('click');
+                startRound();
+            });
         }
-        
+
         // Event listener untuk Reset
-        els.resetBtn.addEventListener('click', resetGame);
+        els.resetBtn.addEventListener('click', () => {
+            audioManager.play('click');
+            resetGame();
+        });
         if (els.resetBtnMobile) {
-            els.resetBtnMobile.addEventListener('click', resetGame);
+            els.resetBtnMobile.addEventListener('click', () => {
+                audioManager.play('click');
+                resetGame();
+            });
         }
-        
+
         // Event listener untuk Hit dan Stand
-        Array.from(document.querySelectorAll('#hitBtn, #hitBtnMobile')).forEach(b => b.addEventListener('click', playerHit));
-        Array.from(document.querySelectorAll('#standBtn, #standBtnMobile')).forEach(b => b.addEventListener('click', playerStand));
-        
+        Array.from(document.querySelectorAll('#hitBtn, #hitBtnMobile')).forEach(b => b.addEventListener('click', () => {
+            audioManager.play('click');
+            playerHit();
+        }));
+        Array.from(document.querySelectorAll('#standBtn, #standBtnMobile')).forEach(b => b.addEventListener('click', () => {
+            audioManager.play('click');
+            playerStand();
+        }));
+
         // Event listener untuk Raise
-        els.raiseBtn.addEventListener('click', raiseBet);
+        els.raiseBtn.addEventListener('click', () => {
+            audioManager.play('click');
+            raiseBet();
+        });
         if (els.raiseBtnMobile) {
-            els.raiseBtnMobile.addEventListener('click', raiseBet);
+            els.raiseBtnMobile.addEventListener('click', () => {
+                audioManager.play('click');
+                raiseBet();
+            });
         }
 
         // Event listener untuk preset buttons
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('preset-btn')) {
+                audioManager.play('click');
                 const value = parseInt(e.target.dataset.value);
                 const currentValue = getBetNumeric(els.bet);
                 const newValue = Math.max(0, currentValue + value);
@@ -1163,7 +1630,7 @@
                     renderBetFromRaw(String(newValue), els.betMobile);
                 }
                 updateRaiseButtonState();
-                
+
                 // Feedback visual
                 e.target.classList.add('scale-95');
                 setTimeout(() => e.target.classList.remove('scale-95'), 150);
