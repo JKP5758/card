@@ -240,17 +240,12 @@
     <div class="max-w-5xl mx-auto p-4 sm:p-6">
         <header class="flex items-center max-sm:flex-col justify-between gap-4">
             <h1 class="text-xl sm:text-2xl font-bold">Mini Blackjack 21 <span class="text-slate-400 text-base">(beta test)</span></h1>
-            <div class="flex items-center flex-row-reverse gap-4 max-sm:w-full max-sm:justify-between">
-                <div class="text-right">
-                    <div class="text-sm text-slate-400">Saldo</div>
-                    <div id="balance" class="text-2xl font-bold">Rp 100.000</div>
-                </div>
-            </div>
+
         </header>
 
         <!-- Controls Desktop -->
-        <section class="mt-4 max-sm:hidden flex w-full sm:grid-cols-3 gap-3">
-            <div class="sm:col-span-1 bg-slate-800/60 rounded-2xl p-4 shadow-glow w-2/5">
+        <section class="mt-4 flex w-full sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-1 bg-slate-800/60 rounded-2xl p-4 shadow-glow w-2/5 max-sm:hidden">
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-slate-300">Aksi Taruhan</div>
                     <div class="text-xs text-slate-400">Total Taruhan: <span id="prizePool" class="font-bold text-base text-white">Rp 0</span></div>
@@ -278,32 +273,43 @@
                 <p class="text-xs text-slate-400 mt-2">Aturan payout: Menang = Taruhan x2, Kalah = Taruhan Hangus, Seri = Taruhan Dikembalikan</p>
             </div>
 
-            <div class="sm:col-span-2 bg-slate-800/60 rounded-2xl p-4 shadow-glow w-3/5">
-                <div class="flex items-center justify-between">
-                    <div class="text-sm text-slate-300">Aksi</div>
-                </div>
-                <div class="mt-2 flex gap-3">
-                    <button id="hitBtn" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil Kartu</button>
-                    <button id="standBtn" class="rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Sudahi Giliran</button>
-                    <div class="flex items-center gap-2">
-                        <button id="muteBtnMobile" class="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700/60 transition-colors">
-                            <div class="mute-icon-container">
-                                <!-- Mute Icon -->
-                                <svg id="muteIconMobile" class="mute-icon w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.794L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.017-2.794a1 1 0 011.617.794zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                </svg>
+            <div class="sm:col-span-2 bg-slate-800/60 rounded-2xl p-4 shadow-glow w-3/5 flex flex-col justify-between max-sm:w-full">
 
-                                <!-- Unmute Icon -->
-                                <svg id="unmuteIconMobile" class="mute-icon w-5 h-5 opacity-0 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.794L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.017-2.794a1 1 0 011.617.794z" clip-rule="evenodd"></path>
-                                    <path d="M14.5 6.5a1 1 0 011.5 1.32 4 4 0 010 4.36 1 1 0 11-1.5 1.32 6 6 0 000-7.04z"></path>
-                                    <path d="M16.5 4.5a1 1 0 011.5 1.32 8 8 0 010 8.36 1 1 0 11-1.5 1.32 10 10 0 000-11z"></path>
-                                </svg>
-                            </div>
-                        </button>
+                <div class="flex items-center flex-row-reverse gap-4 max-sm:w-full max-sm:justify-between">
+                    <div class="text-right">
+                        <div class="text-sm text-slate-400">Saldo</div>
+                        <div id="balance" class="text-2xl font-bold">Rp 100.000</div>
                     </div>
                 </div>
-                <div class="status-box mt-3 text-slate-300"><span id="status" class="status-text"></span></div>
+
+                <div class="max-sm:hidden">
+
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-slate-300">Aksi</div>
+                    </div>
+                    <div class="mt-2 flex gap-3">
+                        <button id="hitBtn" class="rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Ambil Kartu</button>
+                        <button id="standBtn" class="rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 transition px-4 py-2 font-semibold disabled:opacity-40 disabled:cursor-not-allowed" disabled>Sudahi Giliran</button>
+                        <div class="flex items-center gap-2">
+                            <button id="muteBtnMobile" class="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-700/60 transition-colors">
+                                <div class="mute-icon-container">
+                                    <!-- Mute Icon -->
+                                    <svg id="muteIconMobile" class="mute-icon w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.794L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.017-2.794a1 1 0 011.617.794zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                    </svg>
+    
+                                    <!-- Unmute Icon -->
+                                    <svg id="unmuteIconMobile" class="mute-icon w-5 h-5 opacity-0 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.794L4.383 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.383l4.017-2.794a1 1 0 011.617.794z" clip-rule="evenodd"></path>
+                                        <path d="M14.5 6.5a1 1 0 011.5 1.32 4 4 0 010 4.36 1 1 0 11-1.5 1.32 6 6 0 000-7.04z"></path>
+                                        <path d="M16.5 4.5a1 1 0 011.5 1.32 8 8 0 010 8.36 1 1 0 11-1.5 1.32 10 10 0 000-11z"></path>
+                                    </svg>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="status-box mt-3 text-slate-300"><span id="status" class="status-text"></span></div>
+                </div>
             </div>
         </section>
 
@@ -439,7 +445,7 @@
                     cardToHand: 2.0, // Dinaikkan ke batas maksimum (2.0) agar paling keras
                     cardBack: 0.8,
                     win: 1.0,
-                    lose: 0.2,
+                    lose: 0.1,
                     slede: 1.0,
                     bg: 0.2 // Mengembalikan ke nilai awal agar musik tidak mati
                 };
